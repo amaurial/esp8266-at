@@ -1,0 +1,15 @@
+cp -r ../SDK/esptool ./
+cp esptool-0.0.2.zip SDK/
+unzip esptool-0.0.2.zip 
+cd esptool/
+esptool -eo eagle.app.v6.out -bo eagle.app.v6.flash.bin -bs .text -bs .data -bs .rodata -bc -ec
+ls ~/apps/esp-open-sdk/esptool/
+ls /opt/esp/esptool
+export $PATH=/opt/esp/esptool:$PATH
+export PATH=/opt/esp/esptool/:$PATH
+esptool -eo eagle.app.v6.out -bo eagle.app.v6.flash.bin -bs .text -bs .data -bs .rodata -bc -ec
+ls esptool/
+ls esptool/
+$A/esptool/esptool.py --port /dev/ttyUSB0 write_flash 0x00000 eagle.app.v6.flash.bin 0x40000 eagle.app.v6.irom0text.bin
+$A/esptool/esptool.py --port /dev/ttyUSB0 -b 9600 write_flash 0x00000 eagle.app.v6.flash.bin 0x40000 eagle.app.v6.irom0text.bin
+
