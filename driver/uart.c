@@ -64,11 +64,7 @@ uart_config(uint8 uart_no)
   SET_PERI_REG_MASK(UART_CONF0(uart_no), UART_RXFIFO_RST | UART_TXFIFO_RST);
   CLEAR_PERI_REG_MASK(UART_CONF0(uart_no), UART_RXFIFO_RST | UART_TXFIFO_RST);
 
-  //set rx fifo trigger
-//  WRITE_PERI_REG(UART_CONF1(uart_no),
-//                 ((UartDev.rcv_buff.TrigLvl & UART_RXFIFO_FULL_THRHD) << UART_RXFIFO_FULL_THRHD_S) |
-//                 ((96 & UART_TXFIFO_EMPTY_THRHD) << UART_TXFIFO_EMPTY_THRHD_S) |
-//                 UART_RX_FLOW_EN);
+
   if (uart_no == UART0)
   {
     //set rx fifo trigger
@@ -127,7 +123,7 @@ uart1_write_char(char c)
 {
   if (c == '\n')
   {
-    uart_tx_one_char(UART1, '\r');
+    //uart_tx_one_char(UART1, '\r');
     uart_tx_one_char(UART1, '\n');
   }
   else if (c == '\r')
@@ -187,84 +183,30 @@ uart0_rx_intr_handler(void *para)
   /* uart0 and uart1 intr combine togther, when interrupt occur, see reg 0x3ff20020, bit2, bit0 represents
     * uart1 and uart0 respectively
     */
-//  RcvMsgBuff *pRxBuff = (RcvMsgBuff *)para;
+
   uint8 RcvChar;
   uint8 uart_no = UART0;//UartDev.buff_uart_no;
 
-//  if (UART_RXFIFO_FULL_INT_ST != (READ_PERI_REG(UART_INT_ST(uart_no)) & UART_RXFIFO_FULL_INT_ST))
-//  {
-//    return;
-//  }
-//  if (UART_RXFIFO_FULL_INT_ST == (READ_PERI_REG(UART_INT_ST(uart_no)) & UART_RXFIFO_FULL_INT_ST))
-//  {
-////    at_recvTask();
-//    RcvChar = READ_PERI_REG(UART_FIFO(uart_no)) & 0xFF;
-//    system_os_post(at_recvTaskPrio, NULL, RcvChar);
-//    WRITE_PERI_REG(UART_INT_CLR(uart_no), UART_RXFIFO_FULL_INT_CLR);
-//  }
+
   if(UART_FRM_ERR_INT_ST == (READ_PERI_REG(UART_INT_ST(uart_no)) & UART_FRM_ERR_INT_ST))
   {
-    os_printf("FRM_ERR\r\n");
+    os_printf("FRM_ERR\n");
     WRITE_PERI_REG(UART_INT_CLR(uart_no), UART_FRM_ERR_INT_CLR);
   }
 
   if(UART_RXFIFO_FULL_INT_ST == (READ_PERI_REG(UART_INT_ST(uart_no)) & UART_RXFIFO_FULL_INT_ST))
   {
-//    os_printf("fifo full\r\n");
-    ETS_UART_INTR_DISABLE();/////////
-
+    ETS_UART_INTR_DISABLE();
     system_os_post(at_recvTaskPrio, 0, 0);
-
-//    WRITE_PERI_REG(UART_INT_CLR(uart_no), UART_RXFIFO_FULL_INT_CLR);
-//    while (READ_PERI_REG(UART_STATUS(uart_no)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S))
-//    {
-////      at_recvTask();
-//      RcvChar = READ_PERI_REG(UART_FIFO(uart_no)) & 0xFF;
-//      system_os_post(at_recvTaskPrio, NULL, RcvChar);
-//    }
   }
   else if(UART_RXFIFO_TOUT_INT_ST == (READ_PERI_REG(UART_INT_ST(uart_no)) & UART_RXFIFO_TOUT_INT_ST))
   {
-    ETS_UART_INTR_DISABLE();/////////
+    ETS_UART_INTR_DISABLE();
 
-//    os_printf("stat:%02X",*(uint8 *)UART_INT_ENA(uart_no));
+
     system_os_post(at_recvTaskPrio, 0, 0);
 
-//    WRITE_PERI_REG(UART_INT_CLR(uart_no), UART_RXFIFO_TOUT_INT_CLR);
-////    os_printf("rx time over\r\n");
-//    while (READ_PERI_REG(UART_STATUS(uart_no)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S))
-//    {
-////      os_printf("process recv\r\n");
-////      at_recvTask();
-//      RcvChar = READ_PERI_REG(UART_FIFO(uart_no)) & 0xFF;
-//      system_os_post(at_recvTaskPrio, NULL, RcvChar);
-//    }
   }
-
-//  WRITE_PERI_REG(UART_INT_CLR(uart_no), UART_RXFIFO_FULL_INT_CLR);
-
-//  if (READ_PERI_REG(UART_STATUS(uart_no)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S))
-//  {
-//    RcvChar = READ_PERI_REG(UART_FIFO(uart_no)) & 0xFF;
-//    at_recvTask();
-//    *(pRxBuff->pWritePos) = RcvChar;
-
-//    system_os_post(at_recvTaskPrio, NULL, RcvChar);
-
-//    //insert here for get one command line from uart
-//    if (RcvChar == '\r')
-//    {
-//      pRxBuff->BuffState = WRITE_OVER;
-//    }
-//
-//    pRxBuff->pWritePos++;
-//
-//    if (pRxBuff->pWritePos == (pRxBuff->pRcvMsgBuff + RX_BUFF_SIZE))
-//    {
-//      // overflow ...we may need more error handle here.
-//      pRxBuff->pWritePos = pRxBuff->pRcvMsgBuff ;
-//    }
-//  }
 }
 
 /******************************************************************************
@@ -292,6 +234,4 @@ void ICACHE_FLASH_ATTR
 uart_reattach()
 {
 	uart_init(BIT_RATE_74880, BIT_RATE_74880);
-//  ETS_UART_INTR_ATTACH(uart_rx_intr_handler_ssc,  &(UartDev.rcv_buff));
-//  ETS_UART_INTR_ENABLE();
 }

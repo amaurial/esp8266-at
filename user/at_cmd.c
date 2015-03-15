@@ -22,12 +22,12 @@
 
 /** @defgroup AT_BASECMD_Functions
   * @{
-  */ 
+  */
 
 /**
   * @brief  Query and localization one commad.
   * @param  cmdLen: received length of command
-  * @param  pCmd: point to received command 
+  * @param  pCmd: point to received command
   * @retval the id of command
   *   @arg -1: failure
   */
@@ -44,10 +44,8 @@ at_cmdSearch(int8_t cmdLen, uint8_t *pCmd)
   {
     for(i=1; i<at_cmdNum; i++)
     {
-//      os_printf("%d len %d\r\n", cmdLen, at_fun[i].at_cmdLen);
       if(cmdLen == at_fun[i].at_cmdLen)
       {
-//        os_printf("%s cmp %s\r\n", pCmd, at_fun[i].at_cmdName);
         if(os_memcmp(pCmd, at_fun[i].at_cmdName, cmdLen) == 0) //think add cmp len first
         {
           return i;
@@ -60,7 +58,7 @@ at_cmdSearch(int8_t cmdLen, uint8_t *pCmd)
 
 /**
   * @brief  Get the length of commad.
-  * @param  pCmd: point to received command 
+  * @param  pCmd: point to received command
   * @retval the length of command
   *   @arg -1: failure
   */
@@ -74,7 +72,7 @@ at_getCmdLen(uint8_t *pCmd)
 
   while(i--)
   {
-    if((*pCmd == '\r') || (*pCmd == '=') || (*pCmd == '?') || ((*pCmd >= '0')&&(*pCmd <= '9')))
+    if((*pCmd == '\n') || (*pCmd == '=') || (*pCmd == '?') || ((*pCmd >= '0')&&(*pCmd <= '9')))
     {
       return n;
     }
@@ -89,7 +87,7 @@ at_getCmdLen(uint8_t *pCmd)
 
 /**
   * @brief  Distinguish commad and to execution.
-  * @param  pAtRcvData: point to received (command) 
+  * @param  pAtRcvData: point to received (command)
   * @retval None
   */
 void ICACHE_FLASH_ATTR
@@ -106,15 +104,15 @@ at_cmdProcess(uint8_t *pAtRcvData)
   {
     cmdId = at_cmdSearch(cmdLen, pAtRcvData);
   }
-  else 
+  else
   {
   	cmdId = -1;
   }
   if(cmdId != -1)
   {
-//    os_printf("cmd id: %d\r\n", cmdId);
+//    os_printf("cmd id: %d\n", cmdId);
     pAtRcvData += cmdLen;
-    if(*pAtRcvData == '\r')
+    if(*pAtRcvData == '\n')
     {
       if(at_fun[cmdId].at_exeCmd)
       {
@@ -125,7 +123,7 @@ at_cmdProcess(uint8_t *pAtRcvData)
         at_backError;
       }
     }
-    else if(*pAtRcvData == '?' && (pAtRcvData[1] == '\r'))
+    else if(*pAtRcvData == '?' && (pAtRcvData[1] == '\n'))
     {
       if(at_fun[cmdId].at_queryCmd)
       {
@@ -136,7 +134,7 @@ at_cmdProcess(uint8_t *pAtRcvData)
         at_backError;
       }
     }
-    else if((*pAtRcvData == '=') && (pAtRcvData[1] == '?') && (pAtRcvData[2] == '\r'))
+    else if((*pAtRcvData == '=') && (pAtRcvData[1] == '?') && (pAtRcvData[2] == '\n'))
     {
       if(at_fun[cmdId].at_testCmd)
       {
@@ -155,7 +153,6 @@ at_cmdProcess(uint8_t *pAtRcvData)
       }
       else
       {
-//        uart0_sendStr("no this fun\r\n"); //Relax, it's just a code.
         at_backError;
       }
     }
@@ -164,7 +161,7 @@ at_cmdProcess(uint8_t *pAtRcvData)
       at_backError;
     }
   }
-  else 
+  else
   {
   	at_backError;
   }

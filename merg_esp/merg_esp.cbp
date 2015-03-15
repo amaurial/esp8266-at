@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="merg_esp" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/merg_esp" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/merg_esp" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="../driver/uart.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../include/at.h" />
+		<Unit filename="../include/at_version.h" />
+		<Unit filename="../include/driver/uart.h" />
+		<Unit filename="../include/driver/uart_register.h" />
+		<Unit filename="../include/user_config.h" />
+		<Unit filename="../user/at_baseCmd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../user/at_baseCmd.h" />
+		<Unit filename="../user/at_cmd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../user/at_cmd.h" />
+		<Unit filename="../user/at_ipCmd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../user/at_ipCmd.h" />
+		<Unit filename="../user/at_port.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../user/at_wifiCmd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../user/at_wifiCmd.h" />
+		<Unit filename="../user/user_main.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

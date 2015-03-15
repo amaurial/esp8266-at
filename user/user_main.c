@@ -39,7 +39,7 @@ void user_init(void)
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
   }
   at_wifiMode = wifi_get_opmode();
-  os_printf("\r\nready!!!\r\n");
-  uart0_sendStr("\r\nready\r\n");
+  os_printf("\nready!!!\n");
+  uart0_sendStr("\nready\n");
   at_init();
 }

@@ -34,8 +34,6 @@
   */
 extern uint16_t at_sendLen;
 extern uint16_t at_tranLen;
-//extern UartDevice UartDev;
-//extern bool IPMODE;
 extern os_timer_t at_delayCheck;
 extern uint8_t ipDataSendFlag;
 /**
@@ -52,7 +50,6 @@ extern void at_ipDataSendNow(void);
   */
 
 os_event_t    at_recvTaskQueue[at_recvTaskQueueLen];
-//os_event_t    at_busyTaskQueue[at_busyTaskQueueLen];
 os_event_t    at_procTaskQueue[at_procTaskQueueLen];
 
 BOOL specialAtState = TRUE;
@@ -61,15 +58,12 @@ uint8_t *pDataLine;
 BOOL echoFlag = TRUE;
 
 static uint8_t at_cmdLine[at_cmdLenMax];
-uint8_t at_dataLine[at_dataLenMax];/////
-//uint8_t *at_dataLine;
-
+uint8_t at_dataLine[at_dataLenMax];
 /** @defgroup AT_PORT_Functions
   * @{
   */
 
 static void at_procTask(os_event_t *events);
-//static void at_busyTask(os_event_t *events);
 static void at_recvTask(os_event_t *events);
 
 /**
@@ -77,35 +71,28 @@ static void at_recvTask(os_event_t *events);
   * @param  events: contain the uart receive data
   * @retval None
   */
-static void ICACHE_FLASH_ATTR ///////
+static void ICACHE_FLASH_ATTR
 at_recvTask(os_event_t *events)
 {
   static uint8_t atHead[2];
   static uint8_t *pCmdLine;
   uint8_t temp;
 
-//  temp = events->par;
-//  temp = READ_PERI_REG(UART_FIFO(UART0)) & 0xFF;
-//  temp = 'X';
-  //add transparent determine
+
   while(READ_PERI_REG(UART_STATUS(UART0)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S))
   {
-//    temp = READ_PERI_REG(UART_FIFO(UART0)) & 0xFF;
-    WRITE_PERI_REG(0X60000914, 0x73); //WTD
+
+    WRITE_PERI_REG(0X60000914, 0x73);
 
     if(at_state != at_statIpTraning)
     {
       temp = READ_PERI_REG(UART_FIFO(UART0)) & 0xFF;
       if((temp != '\n') && (echoFlag))
       {
-        uart_tx_one_char(temp); //display back
-//        uart_tx_one_char(UART0, temp);
+        uart_tx_one_char(temp);
       }
     }
-//    if((at_state != at_statIpTraning) && (temp != '\n') && (echoFlag))
-//    {
-//      uart_tx_one_char(temp); //display back
-//    }
+
 
     switch(at_state)
     {
@@ -120,7 +107,7 @@ at_recvTask(os_event_t *events)
       }
       else if(temp == '\n') //only get enter
       {
-        uart0_sendStr("\r\nERROR\r\n");
+        uart0_sendStr("\nERROR\n");
       }
       break;
 
@@ -134,7 +121,7 @@ at_recvTask(os_event_t *events)
         at_state = at_statProcess;
         if(echoFlag)
         {
-          uart0_sendStr("\r\n"); ///////////
+          uart0_sendStr("\n");
         }
       }
       else if(pCmdLine >= &at_cmdLine[at_cmdLenMax - 1])
@@ -147,8 +134,7 @@ at_recvTask(os_event_t *events)
     case at_statProcess: //process data
       if(temp == '\n')
       {
-//      system_os_post(at_busyTaskPrio, 0, 1);
-        uart0_sendStr("\r\nbusy p...\r\n");
+        uart0_sendStr("\nbusy p...\n");
       }
       break;
 
@@ -163,30 +149,24 @@ at_recvTask(os_event_t *events)
       {
         pDataLine++;
       }
-//    *pDataLine = temp;
-//    if (pDataLine == &UartDev.rcv_buff.pRcvMsgBuff[at_sendLen-1])
-//    {
-//      system_os_post(at_procTaskPrio, 0, 0);
-//      at_state = at_statIpSended;
-//    }
-//    pDataLine++;
+
       break;
 
     case at_statIpSended: //send data
       if(temp == '\n')
       {
-//      system_os_post(at_busyTaskPrio, 0, 2);
-        uart0_sendStr("busy s...\r\n");
+
+        uart0_sendStr("busy s...\n");
       }
       break;
 
     case at_statIpTraning:
       os_timer_disarm(&at_delayCheck);
-//      *pDataLine = temp;
+
       if(pDataLine > &at_dataLine[at_dataLenMax - 1])
       {
         os_timer_arm(&at_delayCheck, 0, 0);
-        os_printf("exceed\r\n");
+        os_printf("exceed\n");
         return;
       }
       else if(pDataLine == &at_dataLine[at_dataLenMax - 1])
@@ -204,33 +184,10 @@ at_recvTask(os_event_t *events)
         *pDataLine = temp;
         pDataLine++;
         at_tranLen++;
-//        if(ipDataSendFlag == 0)
-//        {
-//          os_timer_arm(&at_delayCheck, 20, 0);
-//        }
+
         os_timer_arm(&at_delayCheck, 20, 0);
       }
       break;
-
-//      os_timer_disarm(&at_delayCheck);
-//      *pDataLine = temp;
-//      if(pDataLine >= &at_dataLine[at_dataLenMax - 1])
-//      {
-////        ETS_UART_INTR_DISABLE();
-////      pDataLine++;
-//        at_tranLen++;
-////      os_timer_arm(&at_delayCheck, 1, 0); /////
-//        system_os_post(at_procTaskPrio, 0, 0);
-//        break;
-//      }
-//      pDataLine++;
-//      at_tranLen++;
-//      if(ipDataSendFlag == 0)
-//      {
-//        os_timer_arm(&at_delayCheck, 20, 0);
-//      }
-//      break;
-
     default:
       if(temp == '\n')
       {
@@ -267,7 +224,7 @@ at_procTask(os_event_t *events)
   }
   else if(at_state == at_statIpSended)
   {
-    at_ipDataSending(at_dataLine);//UartDev.rcv_buff.pRcvMsgBuff);
+    at_ipDataSending(at_dataLine);
     if(specialAtState)
     {
       at_state = at_statIdle;
@@ -275,24 +232,10 @@ at_procTask(os_event_t *events)
   }
   else if(at_state == at_statIpTraning)
   {
-    at_ipDataSendNow();//UartDev.rcv_buff.pRcvMsgBuff);
+    at_ipDataSendNow();
   }
 }
 
-//static void ICACHE_FLASH_ATTR
-//at_busyTask(os_event_t *events)
-//{
-//  switch(events->par)
-//  {
-//  case 1:
-//    uart0_sendStr("\r\nbusy p...\r\n");
-//    break;
-//
-//  case 2:
-//    uart0_sendStr("\r\nbusy s...\r\n");
-//    break;
-//  }
-//}
 
 /**
   * @brief  Initializes build two tasks.
@@ -303,7 +246,6 @@ void ICACHE_FLASH_ATTR
 at_init(void)
 {
   system_os_task(at_recvTask, at_recvTaskPrio, at_recvTaskQueue, at_recvTaskQueueLen);
-//  system_os_task(at_busyTask, at_busyTaskPrio, at_busyTaskQueue, at_busyTaskQueueLen);
   system_os_task(at_procTask, at_procTaskPrio, at_procTaskQueue, at_procTaskQueueLen);
 }
 

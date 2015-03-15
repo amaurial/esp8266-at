@@ -35,7 +35,7 @@ typedef struct
     char flag;
     char reserve[3];
 }updateFlagType;
-  
+
 /**
   * @brief  Execution commad of AT.
   * @param  id: commad id number
@@ -56,7 +56,6 @@ at_exeCmdNull(uint8_t id)
 void ICACHE_FLASH_ATTR
 at_setupCmdE(uint8_t id, char *pPara)
 {
-//  os_printf("%c\n",*pPara);
   if(*pPara == '0')
   {
     echoFlag = FALSE;
@@ -97,13 +96,13 @@ at_exeCmdGmr(uint8_t id)
 
   os_sprintf(temp, AT_VERSION);
   uart0_sendStr(temp);
-  os_sprintf(temp,"%s\r\n", system_get_sdk_version());
+  os_sprintf(temp,"%s\n", system_get_sdk_version());
   uart0_sendStr(temp);
   at_backOk;
 }
 
 #ifdef ali
-//#define upFlagSector  60
+
 /**
   * @brief  Through uart to update
   * @param  id: commad id number
@@ -115,22 +114,22 @@ at_exeCmdUpdate(uint8_t id)
   char temp[32];
   updateFlagType upFlag;
 
-  os_sprintf(temp,"Is about to restart\r\n");
+  os_sprintf(temp,"Is about to restart\n");
   uart0_sendStr(temp);
 
   spi_flash_read(60 * 4096, (uint32 *)&upFlag, sizeof(updateFlagType));
-//  os_printf("%X\r\n",upFlag.flag);
-//  os_printf("%X\r\n",upFlag.reserve[0]);
-//  os_printf("%X\r\n",upFlag.reserve[1]);
-//  os_printf("%X\r\n",upFlag.reserve[2]);
+//  os_printf("%X\n",upFlag.flag);
+//  os_printf("%X\n",upFlag.reserve[0]);
+//  os_printf("%X\n",upFlag.reserve[1]);
+//  os_printf("%X\n",upFlag.reserve[2]);
   upFlag.flag = 1;
   spi_flash_erase_sector(60);
   spi_flash_write(60 * 4096, (uint32 *)&upFlag, sizeof(updateFlagType));
 //  spi_flash_read(60 * 4096, (uint32 *)&upFlag, sizeof(updateFlagType));
-//  os_printf("%X\r\n",upFlag.flag);
-//  os_printf("%X\r\n",upFlag.reserve[0]);
-//  os_printf("%X\r\n",upFlag.reserve[1]);
-//  os_printf("%X\r\n",upFlag.reserve[2]);
+//  os_printf("%X\n",upFlag.flag);
+//  os_printf("%X\n",upFlag.reserve[0]);
+//  os_printf("%X\n",upFlag.reserve[1]);
+//  os_printf("%X\n",upFlag.reserve[2]);
   os_delay_us(10000);
   system_reboot_from(0x00);
 }
@@ -145,14 +144,14 @@ at_setupCmdMpinfo(uint8_t id, char *pPara)
 
   pPara++;
   t = strtol(pPara,NULL,16);
-  os_sprintf(temp,"1st:%x\r\n",t);
+  os_sprintf(temp,"1st:%x\n",t);
   uart0_sendStr(temp);
 
   pPara = strchr(pPara, ',');
 
   pPara++;
   t = strtol(pPara,NULL,16);
-  os_sprintf(temp,"2nd:%x\r\n",t);
+  os_sprintf(temp,"2nd:%x\n",t);
   uart0_sendStr(temp);
 }
 #endif
@@ -250,15 +249,6 @@ at_setupCmdIpr(uint8_t id, char *pPara)
   uart_div_modify(0, UART_CLK_FREQ / tempUart.baud);
   tempUart.saved = 1;
   user_esp_platform_save_param((uint32 *)&tempUart, sizeof(at_uartType));
-//  spi_flash_read(60 * 4096, (uint32 *)&upFlag, sizeof(updateFlagType));
-//  //  os_printf("%X\r\n",upFlag.flag);
-//  //  os_printf("%X\r\n",upFlag.reserve[0]);
-//  //  os_printf("%X\r\n",upFlag.reserve[1]);
-//  //  os_printf("%X\r\n",upFlag.reserve[2]);
-//    upFlag.flag = 1;
-//    spi_flash_erase_sector(60);
-//    spi_flash_write(60 * 4096, (uint32 *)&upFlag, sizeof(updateFlagType));
-//  //  spi_flash_read(60 * 4096, (uint32 *)&upFlag, sizeof(updateFlagType));
   at_backOk;
 }
 
@@ -267,7 +257,7 @@ at_setupCmdGslp(uint8_t id, char *pPara)
 {
 	uint32_t n;
 	pPara++;
-	
+
 	n = atoi(pPara);
 	at_backOk;
 	system_deep_sleep(n*1000);
