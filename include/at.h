@@ -30,7 +30,7 @@
 #define at_backError     uart0_sendStr("\nERROR\n")
 #define at_backTeError   "+CTE ERROR: %d\n"
 
-#define CMD_E 0x0a
+#define CMD_AT 0x0a
 #define CMD_RST 0x0b
 #define CMD_GMR 0x0c
 #define CMD_GSLP 0x0d
@@ -58,25 +58,26 @@
 #define CMD_CIUPDATE 0x23
 #define CMD_CIPING 0x24
 #define CMD_CIPAPPUP 0x25
+#define CMD_ATE 0x26
 
-#define RSP_CONNECTED
-#define RSP_DISCONNECTED
-#define RSP_OK
-#define RSP_TCP_ERROR
-#define ERR_IP_ERROR
-#define RSP_NOAP
-#define RSP_FAIL_CONNECT
-#define RSP_MISS_PARAM_ERROR
-#define RSP_CLOSED
-#define RSP_SENT
-#define RSP_DNS_FAIL
-#define RSP_NOID_ERROR
-#define RSP_LINK_TYPE_ERROR
-#define RSP_BUSY_PROCESSING
-#define RSP_BUSY_SENDING
+#define RSP_CONNECTED 0xA1
+#define RSP_DISCONNECTED 0xA2
+#define RSP_OK 0xA3
+#define RSP_TCP_ERROR 0xA4
+#define ERR_IP_ERROR 0xA5
+#define RSP_NOAP 0xA6
+#define RSP_FAIL_CONNECT 0xA7
+#define RSP_MISS_PARAM_ERROR 0xA8
+#define RSP_CLOSED 0xA9
+#define RSP_SENT 0xAA
+#define RSP_DNS_FAIL 0xAB
+#define RSP_NOID_ERROR 0xAC
+#define RSP_LINK_TYPE_ERROR 0xAD
+#define RSP_BUSY_PROCESSING 0xAE
+#define RSP_BUSY_SENDING 0xAF
 
-#define SOH
-#define EOH
+#define MERG_SOH 0x01
+#define MERG_EOH 0x04
 
 
 typedef enum{
@@ -99,12 +100,12 @@ typedef enum{
 
 typedef struct
 {
-	char *at_cmdName;
-	int8_t at_cmdLen;
-  void (*at_testCmd)(uint8_t id);
-  void (*at_queryCmd)(uint8_t id);
-  void (*at_setupCmd)(uint8_t id, char *pPara);
-  void (*at_exeCmd)(uint8_t id);
+	char *at_cmdName;//command name
+	int8_t at_cmdLen;//command size
+  void (*at_testCmd)(uint8_t id);//test function
+  void (*at_queryCmd)(uint8_t id);//query function
+  void (*at_setupCmd)(uint8_t id, char *pPara);//setup function
+  void (*at_exeCmd)(uint8_t id);//execute function
 }at_funcationType;
 
 typedef struct

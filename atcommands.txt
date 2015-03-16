@@ -1,0 +1,453 @@
+AT	Test AT startup
+code:0x0a
+response:RSP_OK
+
+AT+RST	Restart module
+code:0x0b
+response:RSP_OK
+
+AT+GMR	View version info
+code:0x0c
+response:RSP_OK
+
+GSLP
+code:0x0d
+Type	Instruction	Response	Parameter
+set	AT+GSLP=time	time OK	time : ms , set the sleep time of ESP8266 in ms.
+
+ATE
+code:0x26
+parameter: 
+0 - disable echo
+1 - enable echo
+Type	Instruction	Response
+set	ATE	OK
+Description
+ATE0 : Disable echo
+ATE1 : Enable echo
+
+
+WIFI Function
+Instruction	Description
+AT+CWMODE	WIFI mode（station/softAP/station+softAP）
+AT+CWJAP	Connect to AP
+AT+CWLAP	Lists available APs
+AT+CWQAP	Disconnect from AP
+AT+ CWSAP	Set parameters under AP mode
+AT+ CWLIF	Get station’s ip which is connected to ESP8266 softAP
+
+
+AT+CWMODE - WIFI mode（station/softAP/station+softAP）
+code:0x0f
+response:RSP_OK or 1,2 or 3 + RSP_OK when case the command was query
+parameter:mode
+? - query
+1 -means Station mode
+2 -means AP mode
+3 -means AP + Station mode
+
+Type	Instruction	Response	Function
+Query	AT+CWMODE?	+CWMODE:mode OK	Query AP’s info which is connect by ESP8266.
+Execute	AT+CWMODE=mode	OK	Set AP’s info which will be connect by ESP8266.
+Parameter Description
+mode：
+1 means Station mode
+2 means AP mode
+3 means AP + Station mode
+
+AT+CWJAP – Connect to AP
+code:0x10
+parameter:
+? - query
+ssid,pwd
+response:
+ssid name <string>
+
+Type	Instruction	Response	Function
+Query	AT+CWJAP?	+ CWJAP:ssid OK	Query AP’s info which is connect by ESP8266.
+execute	AT+CWJAP=ssid,pwd	OK	Set AP’s info which will be connect by ESP8266.
+Parameter description：
+ssid： string, AP’s SSID
+pwd： string, MAX: 64 bytes
+
+Example：
+AT+CWJAP="wifi-1","12345678"
+
+
+AT+CWLAP - Lists available APs
+code:0x11
+Type	Instruction	Response	Function
+Set	AT+CWLAP=ssid,mac,ch	+CWLAP:ecn,ssid,rssi,mac OK	Search available APs with specific conditions.
+execute	AT+CWLAP	+CWLAP:ecn,ssid,rssi,mac OK	Lists all available APs.
+Parameter description：
+ecn:
+0 OPEN
+1 WEP
+2 WPA_PSK
+3 WPA2_PSK
+4 WPA_WPA2_PSK
+ssid: string, SSID of AP
+rssi: signal strength
+mac: string, MAC address
+
+AT+CWQAP - Disconnect from AP
+code:0x12
+response: RSP_OK
+Type	Instruction	Response	Function
+execute	AT+CWQAP	OK	Disconnect from AP
+
+
+AT+ CWSAP – Configuration of softAP mode
+code:0x13
+Type	Instruction	Response	Function
+Query	AT+CWSAP?	+CWSAP:ssid,pwd,chl,ecn OK	Query configuration of ESP8266 softAP mode.
+Set	AT+CWSAP=ssid,pwd,chl,ecn	OK	Set configuration of softAP mode.
+Parameter description
+ssid: string, ESP8266 softAP’ SSID
+pwd: string, MAX: 64 bytes
+chl: channel id
+ecn:
+0 OPEN
+2 WPA_PSK
+3 WPA2_PSK
+4 WPA_WPA2_PSK
+
+Example
+AT+CWSAP="esp_123","1234567890",5,3
+
+
+AT+ CWLIF– ip of stations which are connected to ESP8266 softAP
+code:0x14
+Type	Instruction	Response	Function
+execute	AT+CWLIF	ip addr OK	Get ip of stations which are connected to ESP8266 softAP
+Parameter description：
+ip addr: ip address of stations which are connected to ESP8266 softAP
+
+
+AT+CWDHCP - Enable/Disable DHCP
+code:0x15
+Type	Instruction	Response
+Set	AT+CWDHCP=mode,en	OK
+Parameter Description
+mode
+0 : set ESP8266 softAP
+1 : set ESP8266 station
+2 : set both softAP and station
+en
+0 : Enable DHCP
+1 : Disable DHCP
+
+
+AT+CIPSTAMAC - Set mac address of ESP8266 station
+code:0x17
+Type	Instruction	Response	Function
+Query	AT+CIPSTAMAC?	+CIPSTAMAC:mac OK	Query mac info of ESP8266 station.
+Execute	AT+CIPSTAMAC=mac	OK	Set mac of ESP8266 station.
+Parameter Description
+mac： string,mac info of ESP8266 station.
+
+Example
+AT+CIPSTAMAC="18:aa:35:97:d4:7b"
+
+
+AT+CIPSTA - Set ip address of ESP8266 station
+code:0x19
+Type	Instruction	Response	Function
+Query	AT+CIPSTA?	+CIPSTA:ip OK	Get ip address of ESP8266 station.
+Execute	AT+CIPSTA=ip	OK	Set ip addr of ESP8266 station.
+Parameter Description
+ip： string, ip address of ESP8266 station.
+
+Example
+AT+CIPSTA="192.168.101.108"
+
+
+
+AT+CIPAP - Set ip address of ESP8266 softAP
+
+Type	Instruction	Response	Function
+Query	AT+CIPAP?	+CIPAP:ip OK	Get ip address of ESP8266 softAP.
+Execute	AT+CIPAP=ip	OK	Set ip addr of ESP8266 softAP.
+Parameter Description
+ip： string, ip address of ESP8266 softAP.
+
+Example
+AT+CIPAP="192.168.5.1"
+
+
+Instruction	Description
+AT+ CIPSTATUS	Get connection status
+AT+CIPSTART	Establish TCP connection or register UDP port
+AT+CIPSEND	Send data
+AT+CIPCLOSE	Close TCP/UDP connection
+AT+CIFSR	Get local IP address
+AT+CIPMUX	Set multiple connections mode
+AT+CIPSERVER	Configure as server
+AT+CIPMODE	Set transmission mode
+AT+CIPSTO	Set timeout when ESP8266 runs as TCP server
+
+
+AT+ CIPSTATUS – Information about connection
+
+Type	Instruction	Response	Function
+execute	AT+CIPSTATUS	STATUS:stat +CIPSTATUS:id,type,addr,port,tetype OK	Get information about connection.
+Parameter description：
+stat：
+2: Got IP
+3: Connected
+4: Disconnected
+id： id of the connection (0~4), for multi-connect
+type： string, “TCP” or “UDP”
+addr： string, IP address.
+port： port number
+tetype：
+0: ESP8266 runs as client
+1: ESP8266 runs as server
+
+
+AT+CIPSTART – Establish TCP connection or register UDP port, start connection
+
+Type	Instruction	Response	Function
+Set	AT+CIPSTART=type,addr,port	OK	Start a connection as client.(single connection mode)
+Set	AT+CIPSTART=id,type,addr,port	OK	Start a connection as client.(multiple connection mode)
+Param description：
+id: 0-4 , id of connection
+type: string, “TCP” or “UDP”
+addr: string, remote ip
+port: string, remote port
+
+AT+CIPSEND – Send data
+
+Type	Instruction	Response	Function
+Set	AT+CIPSEND=length	SEND OK	Set length of the data that will be sent. For normal send(single connection).
+Set	AT+CIPSEND=id,length	SEND OK	Set length of the data that will be sent. For normal send(multiple connection).
+Execute	AT+CIPSEND		Send data. For unvarnished transmission mode.
+Normal Mode
+
+Parameter description：
+id: ID no. of transmit connection
+length: data length, MAX 2048 bytes
+
+Unvarnished Transmission Mode
+
+Wrap return “>” after execute command. Enters unvarnished transmission, 20ms interval between each packet, maximum 2048 bytes per packet. When single packet containing “+++” is received, it returns to command mode.
+
+
+
+AT+CIPCLOSE – Close TCP or UDP connection
+
+Type	Instruction	Response	Function
+Set	AT+CIPCLOSE=id	OK	Close TCP or UDP connection.For multiply connection mode
+execute	AT+CIPCLOSE	OK	Close TCP or UDP connection.For single connection mode
+Parameter description：
+id： ID no. of connection to close, when id=5, all connections will be closed.
+(id=5 has no effect in server mode)
+
+
+AT+CIFSR – Get local IP address
+
+Type	Instruction	Response	Function
+Execute	AT+CIFSR	+CIFSR:IP_address +CIFSR:IP_address OK	Get local IP address.
+Parameter description：
+IP_address:
+IP address of ESP8266 softAP
+IP address of ESP8266 station
+
+
+AT+ CIPMUX – Enable multiple connections or not
+
+Type	Instruction	Response	Function
+Set	AT+CIPMUX=mode	OK	Set connection mode, single connection or multiple connection.
+Parameter description：
+mode:
+0 single connection
+1 multiple connection
+
+NOTE
+This mode can only be changed after all connections are disconnected. If server is started, reboot is required.
+
+
+AT+ CIPSERVER – Configure as server
+
+Type	Instruction	Response	Function
+Set	AT+CIPSERVER=mode[,port]	OK	Configure ESP8266 as server
+Parameter description：
+mode:
+0 Delete server (need to follow by restart)
+1 Create server
+port: port number, default is 333
+
+NOTE
+1. Server can only be created when AT+CIPMUX=1
+1. Server monitor will automatically be created when Server is created.
+1. When a client is connected to the server, it will take up one connection，be gave an id.
+
+
+AT+ CIPMODE – Set transfer mode
+
+Type	Instruction	Response	Function
+Set	AT+CIPMODE=mode	OK	Set transfer mode,normal or transparent transmission.
+Parameter description：
+mode:
+0 normal mode
+1 unvarnished transmission mode
+
+
+AT+ CIPSTO – Set server timeout
+
+Type	Instruction	Response	Function
+Query	AT+CIPSTO?	+CIPSTO:time	Query server timeout.
+Set	AT+CIPSTO=time	OK	Set server timeout.
+Parameter description：
+time: server timeout, range 0~7200 seconds
+
+
+AT+ CIUPDATE – update through network
+
+Type	Instruction	Response	Function
+execute	AT+CIUPDATE	+CIPUPDATE:n OK	Start update through network
+Parameter description：
+n:
+1 found server
+2 connect server
+3 got edition
+4 start update
+
+
++IPD – Receive network data
+
+Type	Instruction	Response	Function
+execute		+IPD,len:data	Receive network data from single connection.
+execute		+IPD,id,len:data	Receive network data from multiple connection.
+Parameter description：
+id: id no. of connection
+len: data length
+data: data received
+
+
+
+Single connection
+(ESP8266 as TCP client)
+
+1-Set wifi mode：
+AT+CWMODE=3 // softAP+station mode
+Response：OK
+2-Reboot to take effect:
+AT+RST
+Response：OK
+3-Connect to router
+AT+CWJAP="ssid","password" // ssid and password of router
+Response：OK
+4-Query device’s IP
+AT+CIFSR
+Response：192.168.3.106 // Device got an IP from router.
+5-Using a network tool (eg: ”NetAssist.exe”) on the computer to create a server.
+For example, server ip address:192.168.3.116, port 8080
+6-ESP8266EX connect to server as a client
+AT+CIPSTART="TCP","192.168.3.116",8080 //protocol、server IP & port
+Response：OK
+7-Send data
+AT+CIPSEND=4 // set date length which will be sent, such as 4 bytes
+>DGFY // enter the data, no CR
+Response：SEND OK
+Note: If the number of bytes sent is bigger than the size defined (n), will reply busy, and after sending n number of bytes, reply SEND OK.
+8-Receive data:
++IPD,n:xxxxxxxxxx // received n bytes, data=xxxxxxxxxxx
+
+
+Transparent transmission
+Set wifi mode：
+AT+CWMODE=3 // softAP+station mode
+Response：OK
+Connect to router
+AT+CWJAP="ssid","password" // ssid and password of router
+Response：OK
+Query device’s IP
+AT+CIFSR
+Response：192.168.101.105 // Device’s ip that got from router.
+Using a network tool (eg: ”NetAssist.exe”) on the computer to create a server.
+For example, server ip address:192.168.101.110, port 8080
+Device connect to server
+AT+CIPSTART="TCP","192.168.101.110",8080 // protocol、server IP & port
+Response：OK
+Linked
+Enable transparent transmission mode
+AT+CIPMODE=1
+Response：OK
+Start send
+AT+CIPSEND
+Response： >
+Note: From now on, data received from uart will be transparent transmited to server.
+Stop send
+Data packet contains only “+++” exits Unvarnished transmission.
+Multiple connection
+(ESP8266 as TCP server)
+
+Set wifi mode：
+AT+CWMODE=3 // softAP+station mode
+Response：OK
+Enable multiple connection
+AT+CIPMUX=1
+Response：OK
+Setup server
+AT+CIPSERVER=1 // default port = 333
+Response：OK
+PC connects to ESP8266EX softAP as station, then PC connects to ESP8266EX server as client.
+NOTE: ESP8266EX acting as server has a timeout mechanism. When connection is established and no data is transmitted within a period of time, it will disconnect the client. Please setup a recurring packet transmission every 5s on the computer to ensure connection is maintained.
+Send data
+AT+CIPSEND=4 // set date length which will be sent, such as 4 bytes
+>iopd // enter the data, no CR
+Response：SEND OK
+Note: If the number of bytes sent is bigger than the size defined (n), will reply busy, and after sending n number of bytes, reply SEND OK.
+Receive data: +IPD,n:xxxxxxxxxx // received n bytes, data = xxxxxxxxxx
+UDP transmission
+Set wifi mode：
+AT+CWMODE=3 // softAP+station mode
+Response：OK
+Connect to router
+AT+CWJAP="ssid","password" // ssid and password of router
+Response：OK
+Query device’s IP
+AT+CIFSR
+Response：+CIFSR:STAIP,"192.168.101.104" // IP address of ESP8266 station
+PC connects to the same router which ESP8266 connects to. Using a network tool (eg: ”NetAssist.exe”) on the computer to create UDP .
+Enable multiple connection
+AT+CIPMUX=1
+Response：OK
+Create a UDP transmission, for example, id is 4.
+AT+CIPSTART=4,"UDP","192.168.101.110",8080,1112,0
+Response：4,CONNECT OK
+Note：
+"192.168.101.110",8080 here is the remote ip and port of UDP transmission which create on PC in step 4;
+1112 is the local port of ESP8266, user-define, if user does not define it, it will be a random value;
+0 means destination peer entity of UDP will not change. For example, in this case, if another PC also creates a UDP entity and sends data to ESP8266 port 1112, ESP8266 can receive these data, but when we send data with command “AT+CIPSEND=4,X”, it will still be sent to the first PC. If this parameter is not 0, it will send to the new PC.
+Send data
+AT+CIPSEND=4,5 // Send 5 bytes to transmission NO.4
+Response > DGFYQ // enter the data, no CR
+SEND OK
+Note: If the number of bytes sent is bigger than the size defined (n), will reply busy, and after sending n number of bytes, reply SEND OK.
+Receive data:
++IPD,4,n:xxxxxxxxxx // received n bytes, data=xxxxxxxxxxx
+Delete transmission NO.4
+AT+CIPCLOSE=4
+Response：4,CLOSED OK
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
