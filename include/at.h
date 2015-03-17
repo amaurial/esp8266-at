@@ -59,6 +59,7 @@
 #define CMD_CIPING 0x24
 #define CMD_CIPAPPUP 0x25
 #define CMD_ATE 0x26
+#define CMD_MPINFO 0x27
 
 #define RSP_CONNECTED 0xA1
 #define RSP_DISCONNECTED 0xA2
@@ -75,6 +76,7 @@
 #define RSP_LINK_TYPE_ERROR 0xAD
 #define RSP_BUSY_PROCESSING 0xAE
 #define RSP_BUSY_SENDING 0xAF
+
 
 #define MERG_SOH 0x01
 #define MERG_EOH 0x04
@@ -102,6 +104,7 @@ typedef struct
 {
 	char *at_cmdName;//command name
 	int8_t at_cmdLen;//command size
+	int8_t at_cmdCode;//command hexa code
   void (*at_testCmd)(uint8_t id);//test function
   void (*at_queryCmd)(uint8_t id);//query function
   void (*at_setupCmd)(uint8_t id, char *pPara);//setup function
