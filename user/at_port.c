@@ -68,9 +68,147 @@ static void at_recvTask(os_event_t *events);
 
 /**
   * @brief  Uart receive task.
+            Command format:
+            <MERG_SOH><MERG_EOH>
   * @param  events: contain the uart receive data
   * @retval None
   */
+static void ICACHE_FLASH_ATTR
+at_recvTask(os_event_t *events)
+{
+  static uint8_t atHead[1];//search for one byte indicating the start of command
+  static uint8_t *pCmdLine;
+  uint8_t temp;
+
+
+  while(READ_PERI_REG(UART_STATUS(UART0)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S))
+  {
+
+    WRITE_PERI_REG(0X60000914, 0x73);
+
+    if(at_state != at_statIpTraning)
+    {
+      temp = READ_PERI_REG(UART_FIFO(UART0)) & 0xFF;
+      if((temp != '\n') && (echoFlag))
+      {
+        uart_tx_one_char(temp);
+      }
+    }
+
+
+    switch(at_state)
+    {
+    case at_statIdle: //serch "AT" head
+      atHead[0] = atHead[1];
+      atHead[1] = temp;
+      if((os_memcmp(atHead, "AT", 2) == 0) || (os_memcmp(atHead, "at", 2) == 0))
+      {
+        at_state = at_statRecving;
+        pCmdLine = at_cmdLine;
+        atHead[1] = 0x00;
+      }
+      else if(temp == '\n') //only get enter
+      {
+        uart0_sendStr("\nERROR\n");
+      }
+      break;
+
+    case at_statRecving: //push receive data to cmd line
+      *pCmdLine = temp;
+      if(temp == '\n')
+      {
+        system_os_post(at_procTaskPrio, 0, 0);
+        pCmdLine++;
+        *pCmdLine = '\0';
+        at_state = at_statProcess;
+        if(echoFlag)
+        {
+          uart0_sendStr("\n");
+        }
+      }
+      else if(pCmdLine >= &at_cmdLine[at_cmdLenMax - 1])
+      {
+        at_state = at_statIdle;
+      }
+      pCmdLine++;
+      break;
+
+    case at_statProcess: //process data
+      if(temp == '\n')
+      {
+        uart0_sendStr("\nbusy p...\n");
+      }
+      break;
+
+    case at_statIpSending:
+      *pDataLine = temp;
+      if((pDataLine >= &at_dataLine[at_sendLen - 1]) || (pDataLine >= &at_dataLine[at_dataLenMax - 1]))
+      {
+        system_os_post(at_procTaskPrio, 0, 0);
+        at_state = at_statIpSended;
+      }
+      else
+      {
+        pDataLine++;
+      }
+
+      break;
+
+    case at_statIpSended: //send data
+      if(temp == '\n')
+      {
+
+        uart0_sendStr("busy s...\n");
+      }
+      break;
+
+    case at_statIpTraning:
+      os_timer_disarm(&at_delayCheck);
+
+      if(pDataLine > &at_dataLine[at_dataLenMax - 1])
+      {
+        os_timer_arm(&at_delayCheck, 0, 0);
+        os_printf("exceed\n");
+        return;
+      }
+      else if(pDataLine == &at_dataLine[at_dataLenMax - 1])
+      {
+        temp = READ_PERI_REG(UART_FIFO(UART0)) & 0xFF;
+        *pDataLine = temp;
+        pDataLine++;
+        at_tranLen++;
+        os_timer_arm(&at_delayCheck, 0, 0);
+        return;
+      }
+      else
+      {
+        temp = READ_PERI_REG(UART_FIFO(UART0)) & 0xFF;
+        *pDataLine = temp;
+        pDataLine++;
+        at_tranLen++;
+
+        os_timer_arm(&at_delayCheck, 20, 0);
+      }
+      break;
+    default:
+      if(temp == '\n')
+      {
+      }
+      break;
+    }
+  }
+  if(UART_RXFIFO_FULL_INT_ST == (READ_PERI_REG(UART_INT_ST(UART0)) & UART_RXFIFO_FULL_INT_ST))
+  {
+    WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR);
+  }
+  else if(UART_RXFIFO_TOUT_INT_ST == (READ_PERI_REG(UART_INT_ST(UART0)) & UART_RXFIFO_TOUT_INT_ST))
+  {
+    WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_TOUT_INT_CLR);
+  }
+  ETS_UART_INTR_ENABLE();
+}
+//Original function
+/*
 static void ICACHE_FLASH_ATTR
 at_recvTask(os_event_t *events)
 {
@@ -205,6 +343,7 @@ at_recvTask(os_event_t *events)
   }
   ETS_UART_INTR_ENABLE();
 }
+*/
 
 /**
   * @brief  Task of process command or txdata.
