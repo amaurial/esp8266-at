@@ -57,7 +57,7 @@ at_stateType  at_state;
 uint8_t *pDataLine;
 BOOL echoFlag = TRUE;
 
-static uint8_t at_cmdLine[at_cmdLenMax];
+static uint8_t at_cmdLine[CMD_BUFFER_SIZE];
 uint8_t at_dataLine[at_dataLenMax];
 /** @defgroup AT_PORT_Functions
   * @{
@@ -69,18 +69,18 @@ static void at_recvTask(os_event_t *events);
 /**
   * @brief  Uart receive task.
             Command format:
-            <MERG_SOH><MERG_EOH>
+            <CANWII_SOH><COMMAND><PARAM><CANWII_STR_SEP>  ... <CANWII_EOH>
   * @param  events: contain the uart receive data
   * @retval None
   */
 static void ICACHE_FLASH_ATTR
 at_recvTask(os_event_t *events)
 {
-  static uint8_t atHead[1];//search for one byte indicating the start of command
+  static uint8_t atHead;//search for one byte indicating the start of command SOH
   static uint8_t *pCmdLine;
   uint8_t temp;
 
-
+  //read byte per byte
   while(READ_PERI_REG(UART_STATUS(UART0)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S))
   {
 
@@ -88,8 +88,9 @@ at_recvTask(os_event_t *events)
 
     if(at_state != at_statIpTraning)
     {
+      //do the echo function
       temp = READ_PERI_REG(UART_FIFO(UART0)) & 0xFF;
-      if((temp != '\n') && (echoFlag))
+      if((temp != CANWII_EOH) && (echoFlag))
       {
         uart_tx_one_char(temp);
       }
@@ -98,16 +99,16 @@ at_recvTask(os_event_t *events)
 
     switch(at_state)
     {
-    case at_statIdle: //serch "AT" head
-      atHead[0] = atHead[1];
-      atHead[1] = temp;
-      if((os_memcmp(atHead, "AT", 2) == 0) || (os_memcmp(atHead, "at", 2) == 0))
+    case at_statIdle: //serch SOH head
+
+      atHead = temp;
+      if(atHead==CANWII_SOH)
       {
         at_state = at_statRecving;
         pCmdLine = at_cmdLine;
-        atHead[1] = 0x00;
+        atHead= 0x00;
       }
-      else if(temp == '\n') //only get enter
+      else if(temp == CANWII_EOH) //only get end of parameter
       {
         uart0_sendStr("\nERROR\n");
       }
@@ -115,11 +116,13 @@ at_recvTask(os_event_t *events)
 
     case at_statRecving: //push receive data to cmd line
       *pCmdLine = temp;
-      if(temp == '\n')
+      if(temp == CANWII_EOH)
       {
+        //change the task priority
         system_os_post(at_procTaskPrio, 0, 0);
         pCmdLine++;
         *pCmdLine = '\0';
+        //start to process the received command
         at_state = at_statProcess;
         if(echoFlag)
         {
@@ -134,7 +137,7 @@ at_recvTask(os_event_t *events)
       break;
 
     case at_statProcess: //process data
-      if(temp == '\n')
+      if(temp == CANWII_EOH)
       {
         uart0_sendStr("\nbusy p...\n");
       }
@@ -155,9 +158,8 @@ at_recvTask(os_event_t *events)
       break;
 
     case at_statIpSended: //send data
-      if(temp == '\n')
+      if(temp == CANWII_EOH)
       {
-
         uart0_sendStr("busy s...\n");
       }
       break;
@@ -191,7 +193,7 @@ at_recvTask(os_event_t *events)
       }
       break;
     default:
-      if(temp == '\n')
+      if(temp ==CANWII_EOH)
       {
       }
       break;
@@ -384,6 +386,7 @@ at_procTask(os_event_t *events)
 void ICACHE_FLASH_ATTR
 at_init(void)
 {
+  //set the tasks for the OS
   system_os_task(at_recvTask, at_recvTaskPrio, at_recvTaskQueue, at_recvTaskQueueLen);
   system_os_task(at_procTask, at_procTaskPrio, at_procTaskQueue, at_procTaskQueueLen);
 }

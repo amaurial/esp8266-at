@@ -19,9 +19,13 @@
 #define __AT_H
 
 #include "c_types.h"
+#include "canwii.h"
 
 #define at_recvTaskPrio        0
 #define at_recvTaskQueueLen    64
+
+#define CMD_BUFFER_SIZE 128
+
 
 #define at_procTaskPrio        1
 #define at_procTaskQueueLen    1
@@ -61,6 +65,9 @@
 #define CMD_ATE 0x26
 #define CMD_MPINFO 0x27
 
+#define CMD_QUERY '?'
+#define CMD_EQUAL '='
+
 #define RSP_CONNECTED 0xA1
 #define RSP_DISCONNECTED 0xA2
 #define RSP_OK 0xA3
@@ -77,9 +84,6 @@
 #define RSP_BUSY_PROCESSING 0xAE
 #define RSP_BUSY_SENDING 0xAF
 
-
-#define MERG_SOH 0x01
-#define MERG_EOH 0x04
 
 
 typedef enum{

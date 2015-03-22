@@ -36,6 +36,7 @@
 		</Unit>
 		<Unit filename="../include/at.h" />
 		<Unit filename="../include/at_version.h" />
+		<Unit filename="../include/canwii.h" />
 		<Unit filename="../include/driver/uart.h" />
 		<Unit filename="../include/driver/uart_register.h" />
 		<Unit filename="../include/user_config.h" />
