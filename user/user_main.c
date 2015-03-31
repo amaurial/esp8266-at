@@ -32,11 +32,13 @@ void user_init(void)
   user_esp_platform_load_param((uint32 *)&tempUart, sizeof(at_uartType));
   if(tempUart.saved == 1)
   {
+    //uart_init(BIT_RATE_9600, BIT_RATE_9600);
     uart_init(tempUart.baud, BIT_RATE_115200);
   }
   else
   {
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
+    //uart_init(BIT_RATE_9600, BIT_RATE_9600);
   }
   at_wifiMode = wifi_get_opmode();
   os_printf("\nready!!!\n");

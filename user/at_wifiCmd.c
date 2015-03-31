@@ -75,19 +75,6 @@ at_dataStrCpy(void *pDest, const void *pSrc, int8_t maxLen)
   return len;
 }
 
-/**
-  * @brief  Test commad of set wifi mode.
-  * @param  id: commad id number
-  * @retval None
-  */
-void ICACHE_FLASH_ATTR
-at_testCmdCwmode(uint8_t id)
-{
-  char temp[32];
-  os_sprintf(temp, "%s:(1-3)\n", at_fun[id].at_cmdName);
-  uart0_sendStr(temp);
-  at_backOk;
-}
 
 /**
   * @brief  Query commad of set wifi mode.
@@ -182,6 +169,7 @@ scan_done(void *arg, STATUS status)
   specialAtState = TRUE;
   at_state = at_statIdle;
 }
+
 
 void ICACHE_FLASH_ATTR
 at_setupCmdCwlap(uint8_t id, char *pPara)
@@ -379,16 +367,6 @@ at_setupCmdCwjap(uint8_t id, char *pPara)
   }
 }
 
-/**
-  * @brief  Test commad of quit wifi ap.
-  * @param  id: commad id number
-  * @retval None
-  */
-void ICACHE_FLASH_ATTR
-at_testCmdCwqap(uint8_t id)
-{
-  at_backOk;
-}
 
 /**
   * @brief  Execution commad of quit wifi ap.
@@ -402,6 +380,7 @@ at_exeCmdCwqap(uint8_t id)
   mdState = m_wdact;
   at_backOk;
 }
+
 
 /**
   * @brief  Query commad of module as wifi ap.
@@ -530,8 +509,8 @@ at_exeCmdCwlif(uint8_t id)
 void ICACHE_FLASH_ATTR
 at_queryCmdCwdhcp(uint8_t id)
 {
-	char temp[32];
-
+	//char temp[32];
+    at_backOk;
 }
 
 void ICACHE_FLASH_ATTR
@@ -784,6 +763,8 @@ at_setupCmdCipap(uint8_t id, char *pPara)
   wifi_softap_dhcps_start();
   at_backOk;
 }
+
+
 
 /**
   * @}

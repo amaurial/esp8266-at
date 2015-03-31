@@ -23,6 +23,7 @@
 
 //Error codes
 #define CANWII_ERR_FAIL_CONFIG
+#define CANWII_ERR_BUSY
 
 
 #endif // CANWII_H_INCLUDED

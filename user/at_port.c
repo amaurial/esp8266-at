@@ -76,9 +76,9 @@ static void at_recvTask(os_event_t *events);
 static void ICACHE_FLASH_ATTR
 at_recvTask(os_event_t *events)
 {
-  static uint8_t atHead;//search for one byte indicating the start of command SOH
   static uint8_t *pCmdLine;
   uint8_t temp;
+  char intChar[10];
 
   //read byte per byte
   while(READ_PERI_REG(UART_STATUS(UART0)) & (UART_RXFIFO_CNT << UART_RXFIFO_CNT_S))
@@ -88,9 +88,10 @@ at_recvTask(os_event_t *events)
 
     if(at_state != at_statIpTraning)
     {
-      //do the echo function
+      //read the byte from queue
       temp = READ_PERI_REG(UART_FIFO(UART0)) & 0xFF;
-      if((temp != CANWII_EOH) && (echoFlag))
+      //do the echo function
+      if(echoFlag)
       {
         uart_tx_one_char(temp);
       }
@@ -101,38 +102,61 @@ at_recvTask(os_event_t *events)
     {
     case at_statIdle: //serch SOH head
 
-      atHead = temp;
-      if(atHead==CANWII_SOH)
+      if(temp==CANWII_SOH)
       {
+        #ifdef DEBUG
+        uart0_sendStr("start of rec\n");
+        #endif // DEBUG
         at_state = at_statRecving;
+        //pointer to the buffer
         pCmdLine = at_cmdLine;
-        atHead= 0x00;
+        *pCmdLine=temp;
+        pCmdLine++;
       }
       else if(temp == CANWII_EOH) //only get end of parameter
       {
-        uart0_sendStr("\nERROR\n");
+        at_backError;
+      }
+      else{
+        at_backError;
       }
       break;
 
     case at_statRecving: //push receive data to cmd line
+      //put in the buffer
       *pCmdLine = temp;
+      //look for the end of instruction
+
+      #ifdef DEBUG
+        uart0_sendStr("receiving\n");
+      #endif // DEBUG
       if(temp == CANWII_EOH)
       {
+        #ifdef DEBUG
+        uart0_sendStr("found eoh\n");
+        #endif // DEBUG
+
         //change the task priority
         system_os_post(at_procTaskPrio, 0, 0);
         pCmdLine++;
         *pCmdLine = '\0';
         //start to process the received command
+        //the other task at_procTask start to process the buffer
         at_state = at_statProcess;
+        //TODO:
+        //confirm command received?
         if(echoFlag)
         {
+          uart_tx_one_char(temp);
           uart0_sendStr("\n");
         }
       }
+      //check the array boundary by comparing the ponter address
       else if(pCmdLine >= &at_cmdLine[at_cmdLenMax - 1])
       {
         at_state = at_statIdle;
       }
+      //move the buffer pointer
       pCmdLine++;
       break;
 
@@ -140,6 +164,8 @@ at_recvTask(os_event_t *events)
       if(temp == CANWII_EOH)
       {
         uart0_sendStr("\nbusy p...\n");
+        //uart_tx_one_char(CANWII_ERR_BUSY);
+
       }
       break;
 
@@ -161,9 +187,11 @@ at_recvTask(os_event_t *events)
       if(temp == CANWII_EOH)
       {
         uart0_sendStr("busy s...\n");
+        //uart_tx_one_char(CANWII_ERR_BUSY);
       }
       break;
-
+    //TODO:
+    //what is that?
     case at_statIpTraning:
       os_timer_disarm(&at_delayCheck);
 
@@ -188,7 +216,6 @@ at_recvTask(os_event_t *events)
         *pDataLine = temp;
         pDataLine++;
         at_tranLen++;
-
         os_timer_arm(&at_delayCheck, 20, 0);
       }
       break;
@@ -357,6 +384,7 @@ at_procTask(os_event_t *events)
 {
   if(at_state == at_statProcess)
   {
+    uart0_sendStr("process cmd\n");
     at_cmdProcess(at_cmdLine);
     if(specialAtState)
     {
@@ -365,6 +393,7 @@ at_procTask(os_event_t *events)
   }
   else if(at_state == at_statIpSended)
   {
+    uart0_sendStr("sending ip data\n");
     at_ipDataSending(at_dataLine);
     if(specialAtState)
     {
@@ -373,6 +402,7 @@ at_procTask(os_event_t *events)
   }
   else if(at_state == at_statIpTraning)
   {
+     uart0_sendStr("sending ip data now\n");
     at_ipDataSendNow();
   }
 }

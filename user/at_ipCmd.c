@@ -62,13 +62,16 @@ static struct espconn *pUdpServer;
 static void at_tcpclient_discon_cb(void *arg);
 
 /**
-  * @brief  Test commad of get module ip.
+  * @brief  Test commad of at_testQueryCmdCwsap.
   * @param  id: commad id number
   * @retval None
   */
 void ICACHE_FLASH_ATTR
-at_testCmdCifsr(uint8_t id)
+at_testCmdGeneric(uint8_t id)
 {
+  char temp[32];
+  os_sprintf(temp, "%s:(1-3)\n", at_fun[id].at_cmdName);
+  uart0_sendStr(temp);
   at_backOk;
 }
 
@@ -158,17 +161,6 @@ at_exeCmdCifsr(uint8_t id)//add get station ip and ap ip
     uart0_sendStr(temp);
   }
   mdState = m_gotip;
-  at_backOk;
-}
-
-/**
-  * @brief  Test commad of get link status.
-  * @param  id: commad id number
-  * @retval None
-  */
-void ICACHE_FLASH_ATTR
-at_testCmdCipstatus(uint8_t id)
-{
   at_backOk;
 }
 
@@ -899,16 +891,6 @@ at_tcpclient_discon_cb(void *arg)
   at_state = at_statIdle;
 }
 
-/**
-  * @brief  Test commad of close ip link.
-  * @param  id: commad id number
-  * @retval None
-  */
-void ICACHE_FLASH_ATTR
-at_testCmdCipclose(uint8_t id)
-{
-  at_backOk;
-}
 
 /**
   * @brief  Setup commad of close ip link.
@@ -1082,17 +1064,6 @@ at_exeCmdCipclose(uint8_t id)
   {
     at_backError;
   }
-}
-
-/**
-  * @brief  Test commad of send ip data.
-  * @param  id: commad id number
-  * @retval None
-  */
-void ICACHE_FLASH_ATTR
-at_testCmdCipsend(uint8_t id)
-{
-  at_backOk;
 }
 
 char * ICACHE_FLASH_ATTR

@@ -107,12 +107,19 @@ static int8_t ICACHE_FLASH_ATTR
 at_checkCmdFormat(uint8_t *pCmd){
     int i=0;
     if (*pCmd!=CANWII_SOH){
+        #ifdef DEBUG
+        uart0_sendStr("1st not soh\n");
+        #endif // DEBUG
+
         return 1;
     }
     //look for end of command
-    pCmd++;
     for (i=0;i<CMD_BUFFER_SIZE;i++){
         if (*pCmd==CANWII_EOH){
+
+            #ifdef DEBUG
+            uart0_sendStr("found valid eoh\n");
+            #endif // DEBUG
             break;
         }
         pCmd++;
@@ -138,13 +145,25 @@ at_cmdProcess(uint8_t *pAtRcvData)
   int16_t cmdId;
   int8_t cmdLen;
   uint16_t i;
+  //os_sprintf(tempStr,"buffer:%s\n",pAtRcvData);
 
   if(at_checkCmdFormat(pAtRcvData)==0)
   {
+    //point to command code
+    pAtRcvData++;
     cmdId = at_cmdSearch(pAtRcvData);
+    #ifdef DEBUG
+        os_sprintf(tempStr,"valid format, cmd:%d\n",cmdId);
+        uart0_sendStr(tempStr);
+    #endif // DEBUG
+
   }
   else
   {
+
+    #ifdef DEBUG
+        uart0_sendStr("cmd invalid\n");
+    #endif // DEBUG
   	at_backError;
   	return;
   }
@@ -153,8 +172,13 @@ at_cmdProcess(uint8_t *pAtRcvData)
 //    os_printf("cmd id: %d\n", cmdId);
     //pAtRcvData += cmdLen;
     pAtRcvData++;
+    //found end of command. process the command. see at_cmd.h
     if(*pAtRcvData == CANWII_EOH)
     {
+      #ifdef DEBUG
+        uart0_sendStr("execute command\n");
+    #endif // DEBUG
+
       if(at_fun[cmdId].at_exeCmd)
       {
         at_fun[cmdId].at_exeCmd(cmdId);
@@ -164,8 +188,13 @@ at_cmdProcess(uint8_t *pAtRcvData)
         at_backError;
       }
     }
+    //found query command. process it. see at_cmd.h
     else if(*pAtRcvData == CMD_QUERY && (pAtRcvData[1] ==CANWII_EOH))
     {
+
+      #ifdef DEBUG
+        uart0_sendStr("execute query\n");
+    #endif // DEBUG
       if(at_fun[cmdId].at_queryCmd)
       {
         at_fun[cmdId].at_queryCmd(cmdId);
@@ -175,8 +204,13 @@ at_cmdProcess(uint8_t *pAtRcvData)
         at_backError;
       }
     }
+    //test function. include '=?<EOH>'
     else if((*pAtRcvData == CMD_EQUAL) && (pAtRcvData[1] == CMD_QUERY) && (pAtRcvData[2] == CANWII_EOH))
     {
+
+      #ifdef DEBUG
+        uart0_sendStr("execute test\n");
+    #endif // DEBUG
       if(at_fun[cmdId].at_testCmd)
       {
         at_fun[cmdId].at_testCmd(cmdId);
@@ -186,8 +220,13 @@ at_cmdProcess(uint8_t *pAtRcvData)
         at_backError;
       }
     }
+    //function with parameter.
     else if((*pAtRcvData >= '0') && (*pAtRcvData <= '9') || (*pAtRcvData == CMD_EQUAL))
     {
+    #ifdef DEBUG
+        uart0_sendStr("execute set\n");
+    #endif // DEBUG
+
       if(at_fun[cmdId].at_setupCmd)
       {
         at_fun[cmdId].at_setupCmd(cmdId, pAtRcvData);

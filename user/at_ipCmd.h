@@ -39,21 +39,19 @@ typedef struct
 	struct espconn *pCon;
 }at_linkConType;
 
-void at_testCmdCifsr(uint8_t id);
+void at_testCmdGeneric(uint8_t id);
+
 void at_setupCmdCifsr(uint8_t id, char *pPara);
 void at_exeCmdCifsr(uint8_t id);
 
-void at_testCmdCipstatus(uint8_t id);
 void at_exeCmdCipstatus(uint8_t id);
 
 void at_testCmdCipstart(uint8_t id);
 void at_setupCmdCipstart(uint8_t id, char *pPara);
 
-void at_testCmdCipclose(uint8_t id);
 void at_setupCmdCipclose(uint8_t id, char *pPara);
 void at_exeCmdCipclose(uint8_t id);
 
-void at_testCmdCipsend(uint8_t id);
 void at_setupCmdCipsend(uint8_t id, char *pPara);
 void at_exeCmdCipsend(uint8_t id);
 

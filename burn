@@ -1,0 +1,7 @@
+#!/bin/bash
+
+make clean
+make
+./prepare_flash.sh
+./flash.sh /dev/ttyUSB0 both 
+
