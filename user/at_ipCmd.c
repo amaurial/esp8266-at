@@ -1140,7 +1140,7 @@ at_setupCmdCipsend(uint8_t id, char *pPara)
     return;
   }
   pPara = at_checkLastNum(pPara, 5);
-  if((pPara == NULL)||(*pPara != '\r'))
+  if((pPara == NULL)||(*pPara != CANWII_EOH))
   {
     uart0_sendStr("type error\n");
     return;
@@ -1512,7 +1512,7 @@ at_setupCmdCipserver(uint8_t id, char *pPara)
   pPara++;
   if(serverEnTemp == 0)
   {
-    if(*pPara != '\r')
+    if(*pPara != CANWII_EOH)
     {
       at_backError;
       return;

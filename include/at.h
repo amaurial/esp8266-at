@@ -25,7 +25,7 @@
 #define at_recvTaskQueueLen    64
 
 #define CMD_BUFFER_SIZE 128
-#define DEBUG 1
+//#define DEBUG 1
 
 
 #define at_procTaskPrio        1

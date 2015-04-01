@@ -384,7 +384,10 @@ at_procTask(os_event_t *events)
 {
   if(at_state == at_statProcess)
   {
-    uart0_sendStr("process cmd\n");
+    #ifdef DEBUG
+        uart0_sendStr("process cmd\n");
+    #endif // DEBUG
+
     at_cmdProcess(at_cmdLine);
     if(specialAtState)
     {
@@ -393,7 +396,10 @@ at_procTask(os_event_t *events)
   }
   else if(at_state == at_statIpSended)
   {
-    uart0_sendStr("sending ip data\n");
+
+    #ifdef DEBUG
+        uart0_sendStr("sending ip data\n");
+    #endif // DEBUG
     at_ipDataSending(at_dataLine);
     if(specialAtState)
     {
@@ -402,7 +408,10 @@ at_procTask(os_event_t *events)
   }
   else if(at_state == at_statIpTraning)
   {
-     uart0_sendStr("sending ip data now\n");
+     #ifdef DEBUG
+        uart0_sendStr("sending ip data now\n");
+    #endif // DEBUG
+
     at_ipDataSendNow();
   }
 }
