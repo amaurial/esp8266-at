@@ -26,14 +26,20 @@
 
 #define CMD_BUFFER_SIZE 128
 //#define DEBUG 1
+#define VERBOSE 1
 
 
 #define at_procTaskPrio        1
 #define at_procTaskQueueLen    1
-
-#define at_backOk        uart0_sendStr("\nOK\n")
-#define at_backError     uart0_sendStr("\nERROR\n")
-#define at_backTeError   "+CTE ERROR: %d\n"
+#ifdef VERBOSE
+    #define at_backOk        uart0_sendStr("\nOK\n")
+    #define at_backError     uart0_sendStr("\nERROR\n")
+    #define at_backTeError   "+CTE ERROR: %d\n"
+#else
+    #define at_backOk        uart0_sendStr(CANWII_OK)
+    #define at_backError     uart0_sendStr(CANWII_ERR)
+    #define at_backTeError   "%d" + CANWII_TE_ERR
+#endif // VERBOSE
 
 #define CMD_AT 0x0a
 #define CMD_RST 0x0b
@@ -65,6 +71,7 @@
 #define CMD_CIPAPPUP 0x25
 #define CMD_ATE 0x26
 #define CMD_MPINFO 0x27
+#define CMD_IPD 0x28
 
 #define CMD_QUERY '?'
 #define CMD_EQUAL '='
@@ -73,7 +80,7 @@
 #define RSP_DISCONNECTED 0xA2
 #define RSP_OK 0xA3
 #define RSP_TCP_ERROR 0xA4
-#define ERR_IP_ERROR 0xA5
+#define RSP_IP_ERROR 0xA5
 #define RSP_NOAP 0xA6
 #define RSP_FAIL_CONNECT 0xA7
 #define RSP_MISS_PARAM_ERROR 0xA8

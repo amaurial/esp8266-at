@@ -96,6 +96,7 @@ at_exeCmdGmr(uint8_t id)
 
   os_sprintf(temp, AT_VERSION);
   uart0_sendStr(temp);
+  //TODO: change the message
   os_sprintf(temp,"%s\n", system_get_sdk_version());
   uart0_sendStr(temp);
   at_backOk;
@@ -252,7 +253,6 @@ at_setupCmdIpr(uint8_t id, char *pPara)
   user_esp_platform_save_param((uint32 *)&tempUart, sizeof(at_uartType));
   at_backOk;
 }
-
 
 void ICACHE_FLASH_ATTR
 at_setupCmdGslp(uint8_t id, char *pPara)

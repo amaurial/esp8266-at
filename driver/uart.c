@@ -145,10 +145,21 @@ void ICACHE_FLASH_ATTR
 uart0_tx_buffer(uint8 *buf, uint16 len)
 {
   uint16 i;
+  uint8 c;
 
   for (i = 0; i < len; i++)
   {
-    uart_tx_one_char(UART0, buf[i]);
+    //avoiding sending \r
+    c=buf[i];
+    if (buf[i]=='\r') {
+        if (i<len){
+            if (buf[i+1]=='\n'){
+                c='\n';
+                i++;
+            }
+        }
+    }
+    uart_tx_one_char(UART0, c);
   }
 }
 

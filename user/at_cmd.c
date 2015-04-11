@@ -27,7 +27,6 @@
 
 /**
   * @brief  Query and localization one commad.
-  * @param  cmdLen: received length of command
   * @param  pCmd: point to received command
   * @retval the id of command
   *   @arg -1: failure
@@ -45,63 +44,12 @@ at_cmdSearch(uint8_t *pCmd)
 
   return -1;
 }
-//original function
-/*
-static int16_t ICACHE_FLASH_ATTR
-at_cmdSearch(int8_t cmdLen, uint8_t *pCmd)
-{
-  int16_t i;
-
-  if(cmdLen == 0)
-  {
-    return 0;
-  }
-  else if(cmdLen > 0)
-  {
-    for(i=1; i<at_cmdNum; i++)
-    {
-      if(cmdLen == at_fun[i].at_cmdLen)
-      {
-        if(os_memcmp(pCmd, at_fun[i].at_cmdName, cmdLen) == 0) //think add cmp len first
-        {
-          return i;
-        }
-      }
-    }
-  }
-  return -1;
-}
-*/
 /**
-  * @brief  Get the length of commad.
+  * @brief  Check if the received command is well formed
   * @param  pCmd: point to received command
-  * @retval the length of command
+  * @retval the id of command
   *   @arg -1: failure
   */
-  /*
-static int8_t ICACHE_FLASH_ATTR
-at_getCmdLen(uint8_t *pCmd)
-{
-  uint8_t n,i;
-
-  n = 0;
-  i = CMD_BUFFER_SIZE;
-
-  while(i--)
-  {
-    if((*pCmd == '\n') || (*pCmd == '=') || (*pCmd == '?') || ((*pCmd >= '0')&&(*pCmd <= '9')))
-    {
-      return n;
-    }
-    else
-    {
-      pCmd++;
-      n++;
-    }
-  }
-  return -1;
-}
-*/
 
 static int8_t ICACHE_FLASH_ATTR
 at_checkCmdFormat(uint8_t *pCmd){
@@ -111,7 +59,7 @@ at_checkCmdFormat(uint8_t *pCmd){
         uart0_sendStr("1st not soh\n");
         #endif // DEBUG
 
-        return 1;
+        return -1;
     }
     //look for end of command
     for (i=0;i<CMD_BUFFER_SIZE;i++){
@@ -128,7 +76,7 @@ at_checkCmdFormat(uint8_t *pCmd){
     if (i>1){
         return 0;
     }
-    return 1;
+    return -1;
 }
 /**
   * @brief  Distinguish commad and to execution.
@@ -242,84 +190,7 @@ at_cmdProcess(uint8_t *pAtRcvData)
     }
   }
 }
-/*original function
-void ICACHE_FLASH_ATTR
-at_cmdProcess(uint8_t *pAtRcvData)
-{
-  char tempStr[32];
 
-  int16_t cmdId;
-  int8_t cmdLen;
-  uint16_t i;
-
-  cmdLen = at_getCmdLen(pAtRcvData);
-  if(cmdLen != -1)
-  {
-    cmdId = at_cmdSearch(cmdLen, pAtRcvData);
-  }
-  else
-  {
-  	cmdId = -1;
-  }
-  if(cmdId != -1)
-  {
-//    os_printf("cmd id: %d\n", cmdId);
-    pAtRcvData += cmdLen;
-    if(*pAtRcvData == '\n')
-    {
-      if(at_fun[cmdId].at_exeCmd)
-      {
-        at_fun[cmdId].at_exeCmd(cmdId);
-      }
-      else
-      {
-        at_backError;
-      }
-    }
-    else if(*pAtRcvData == '?' && (pAtRcvData[1] == '\n'))
-    {
-      if(at_fun[cmdId].at_queryCmd)
-      {
-        at_fun[cmdId].at_queryCmd(cmdId);
-      }
-      else
-      {
-        at_backError;
-      }
-    }
-    else if((*pAtRcvData == '=') && (pAtRcvData[1] == '?') && (pAtRcvData[2] == '\n'))
-    {
-      if(at_fun[cmdId].at_testCmd)
-      {
-        at_fun[cmdId].at_testCmd(cmdId);
-      }
-      else
-      {
-        at_backError;
-      }
-    }
-    else if((*pAtRcvData >= '0') && (*pAtRcvData <= '9') || (*pAtRcvData == '='))
-    {
-      if(at_fun[cmdId].at_setupCmd)
-      {
-        at_fun[cmdId].at_setupCmd(cmdId, pAtRcvData);
-      }
-      else
-      {
-        at_backError;
-      }
-    }
-    else
-    {
-      at_backError;
-    }
-  }
-  else
-  {
-  	at_backError;
-  }
-}
-*/
 /**
   * @}
   */

@@ -41,6 +41,8 @@ uint16_t at_tranLen; //now is 256
 os_timer_t at_delayCheck;
 BOOL IPMODE;
 uint8_t ipDataSendFlag = 0;
+struct_MSGType generalMSG;
+
 
 static BOOL at_ipMux = FALSE;
 static BOOL disAllFlag = FALSE;
@@ -69,10 +71,14 @@ static void at_tcpclient_discon_cb(void *arg);
 void ICACHE_FLASH_ATTR
 at_testCmdGeneric(uint8_t id)
 {
-  char temp[32];
-  os_sprintf(temp, "%s:(1-3)\n", at_fun[id].at_cmdName);
-  uart0_sendStr(temp);
-  at_backOk;
+    char temp[32];
+    #ifdef VERBOSE
+        os_sprintf(temp, "%s:(1-3)\n", at_fun[id].at_cmdName);
+    #else
+        os_sprintf(temp, "%d%d%d",CANWII_SOH, at_fun[id].at_cmdCode,CANWII_EOH);
+    #endif // VERBOSE
+    uart0_sendStr(temp);
+    at_backOk;
 }
 
 void ICACHE_FLASH_ATTR
@@ -92,7 +98,14 @@ at_setupCmdCifsr(uint8_t id, char *pPara)
   len = at_dataStrCpy(ipTemp, pPara, 32);
   if(len == -1)
   {
-    uart0_sendStr("IP ERROR\n");
+
+    #ifdef VERBOSE
+        uart0_sendStr("IP ERROR\n");
+    #else
+        os_sprintf(temp, "%d%d%d",CANWII_SOH, RSP_IP_ERROR,CANWII_EOH);
+    #endif // VERBOSE
+
+
     return;
   }
 
@@ -126,39 +139,58 @@ at_exeCmdCifsr(uint8_t id)//add get station ip and ap ip
   if((at_wifiMode == SOFTAP_MODE)||(at_wifiMode == STATIONAP_MODE))
   {
     wifi_get_ip_info(0x01, &pTempIp);
-    os_sprintf(temp, "%s:APIP,", at_fun[id].at_cmdName);
-    uart0_sendStr(temp);
-
-    os_sprintf(temp, "\"%d.%d.%d.%d\"\n",
-               IP2STR(&pTempIp.ip));
-    uart0_sendStr(temp);
-
-    os_sprintf(temp, "%s:APMAC,", at_fun[id].at_cmdName);
-    uart0_sendStr(temp);
-
     wifi_get_macaddr(SOFTAP_IF, bssid);
-    os_sprintf(temp, "\""MACSTR"\"\n",
-               MAC2STR(bssid));
-    uart0_sendStr(temp);
+     #ifdef VERBOSE
+        os_sprintf(temp, "%s:APIP,", at_fun[id].at_cmdName);
+        uart0_sendStr(temp);
+
+        os_sprintf(temp, "\"%d.%d.%d.%d\"\n",
+                   IP2STR(&pTempIp.ip));
+        uart0_sendStr(temp);
+
+        os_sprintf(temp, "%s:APMAC,", at_fun[id].at_cmdName);
+        uart0_sendStr(temp);
+
+        os_sprintf(temp, "\""MACSTR"\"\n",
+                   MAC2STR(bssid));
+        uart0_sendStr(temp);
+    #else
+        //<SOH><CMD><P1><IP><P2><MAC><EOH>
+
+        os_sprintf(temp, "%d%d%d%d.%d.%d.%s%d",CANWII_SOH, at_fun[id].at_cmdCode,
+                    1,IP2STR(&pTempIp.ip),2,MAC2STR(bssid),CANWII_EOH);
+        uart0_sendStr(temp);
+    #endif // VERBOSE
+
+
 //    mdState = m_gotip; /////////
   }
   if((at_wifiMode == STATION_MODE)||(at_wifiMode == STATIONAP_MODE))
   {
     wifi_get_ip_info(0x00, &pTempIp);
-    os_sprintf(temp, "%s:STAIP,", at_fun[id].at_cmdName);
-    uart0_sendStr(temp);
-
-    os_sprintf(temp, "\"%d.%d.%d.%d\"\n",
-               IP2STR(&pTempIp.ip));
-    uart0_sendStr(temp);
-
-    os_sprintf(temp, "%s:STAMAC,", at_fun[id].at_cmdName);
-    uart0_sendStr(temp);
-
     wifi_get_macaddr(STATION_IF, bssid);
-    os_sprintf(temp, "\""MACSTR"\"\n",
-               MAC2STR(bssid));
-    uart0_sendStr(temp);
+
+    #ifdef VERBOSE
+        os_sprintf(temp, "%s:STAIP,", at_fun[id].at_cmdName);
+        uart0_sendStr(temp);
+
+        os_sprintf(temp, "\"%d.%d.%d.%d\"\n",
+                   IP2STR(&pTempIp.ip));
+        uart0_sendStr(temp);
+
+        os_sprintf(temp, "%s:STAMAC,", at_fun[id].at_cmdName);
+        uart0_sendStr(temp);
+
+
+        os_sprintf(temp, "\""MACSTR"\"\n",
+                   MAC2STR(bssid));
+        uart0_sendStr(temp);
+    #else
+        os_sprintf(temp, "%d%d%d%d.%d.%d.%s%d",CANWII_SOH, at_fun[id].at_cmdCode,
+                    1,IP2STR(&pTempIp.ip),2,MAC2STR(bssid),CANWII_EOH);
+        uart0_sendStr(temp);
+    #endif // VERBOSE
+
   }
   mdState = m_gotip;
   at_backOk;
@@ -175,8 +207,13 @@ at_exeCmdCipstatus(uint8_t id)
   char temp[64];
   uint8_t i;
 
-  os_sprintf(temp, "STATUS:%d\n",
-             mdState);
+
+    #ifdef VERBOSE
+        os_sprintf(temp, "STATUS:%d\n",
+         mdState);
+    #else
+        os_sprintf(temp, "%d%d",CANWII_SOH, CMD_CIPSTATUS);
+    #endif // VERBOSE
   uart0_sendStr(temp);
   if(serverEn)
   {
@@ -188,16 +225,29 @@ at_exeCmdCipstatus(uint8_t id)
     {
       if(pLink[i].pCon->type == ESPCONN_TCP)
       {
+
+
+        #ifdef VERBOSE
         os_sprintf(temp, "%s:%d,\"TCP\",\"%d.%d.%d.%d\",%d,%d\n",
                    at_fun[id].at_cmdName,
                    pLink[i].linkId,
                    IP2STR(pLink[i].pCon->proto.tcp->remote_ip),
                    pLink[i].pCon->proto.tcp->remote_port,
                    pLink[i].teType);
-        uart0_sendStr(temp);
+        #else
+            os_sprintf(temp, "%d,%d,%d.%d.%d.%d,%d,%d\n",
+                   pLink[i].linkId,
+                   CANWII_TCP,
+                   IP2STR(pLink[i].pCon->proto.tcp->remote_ip),
+                   pLink[i].pCon->proto.tcp->remote_port,
+                   pLink[i].teType);
+            uart0_sendStr(temp);
+        #endif // VERBOSE
       }
       else
       {
+
+        #ifdef VERBOSE
         os_sprintf(temp, "%s:%d,\"UDP\",\"%d.%d.%d.%d\",%d,%d,%d\n",
                    at_fun[id].at_cmdName,
                    pLink[i].linkId,
@@ -205,10 +255,21 @@ at_exeCmdCipstatus(uint8_t id)
                    pLink[i].pCon->proto.udp->remote_port,
                    pLink[i].pCon->proto.udp->local_port,
                    pLink[i].teType);
-        uart0_sendStr(temp);
+        #else
+            os_sprintf(temp, "%d,%d,%d.%d.%d.%d,%d,%d\n",
+                   pLink[i].linkId,
+                   CANWII_UDP,
+                   IP2STR(pLink[i].pCon->proto.tcp->remote_ip),
+                   pLink[i].pCon->proto.tcp->remote_port,
+                   pLink[i].teType);
+            uart0_sendStr(temp);
+        #endif // VERBOSE
+
       }
+
     }
   }
+  uart_tx_one_char(CANWII_EOH);
   at_backOk;
 }
 
@@ -255,28 +316,7 @@ at_tcpclient_recv(void *arg, char *pdata, unsigned short len)
 {
   struct espconn *pespconn = (struct espconn *)arg;
   at_linkConType *linkTemp = (at_linkConType *)pespconn->reverse;
-  char temp[32];
-
-  os_printf("recv\n");
-  if(at_ipMux)
-  {
-    os_sprintf(temp, "\n+IPD,%d,%d:",
-               linkTemp->linkId, len);
-    uart0_sendStr(temp);
-    uart0_tx_buffer(pdata, len);
-  }
-  else if(IPMODE == FALSE)
-  {
-    os_sprintf(temp, "\n+IPD,%d:", len);
-    uart0_sendStr(temp);
-    uart0_tx_buffer(pdata, len);
-  }
-  else
-  {
-  	uart0_tx_buffer(pdata, len);
-  	return;
-  }
-  at_backOk;
+  at_sendData(pdata,len,linkTemp->linkId);
 }
 
 /**
@@ -291,7 +331,6 @@ at_udpclient_recv(void *arg, char *pdata, unsigned short len)
 {
   struct espconn *pespconn = (struct espconn *)arg;
   at_linkConType *linkTemp = (at_linkConType *)pespconn->reverse;
-  char temp[32];
 
   os_printf("recv\n");
   if(linkTemp->changType == 0) //if when sending, receive data???
@@ -306,25 +345,56 @@ at_udpclient_recv(void *arg, char *pdata, unsigned short len)
     linkTemp->changType = 0;
   }
 
-  if(at_ipMux)
-  {
-    os_sprintf(temp, "\n+IPD,%d,%d:",
-               linkTemp->linkId, len);
-    uart0_sendStr(temp);
-    uart0_tx_buffer(pdata, len);
-  }
-  else if(IPMODE == FALSE)
-  {
-    os_sprintf(temp, "\n+IPD,%d:", len);
-    uart0_sendStr(temp);
-    uart0_tx_buffer(pdata, len);
-  }
-  else
-  {
-    uart0_tx_buffer(pdata, len);
-    return;
-  }
-  at_backOk;
+  at_sendData(pdata,len,linkTemp->linkId);
+}
+
+void ICACHE_FLASH_ATTR
+at_sendData(char *pdata, unsigned short len,uint8_t linkId)
+{
+    char temp[32];
+#ifdef VERBOSE
+      os_printf("recv\n");
+      if(at_ipMux)
+      {
+        os_sprintf(temp, "\n+IPD,%d,%d:",linkId, len);
+        uart0_sendStr(temp);
+        uart0_tx_buffer(pdata, len);
+      }
+      else if(IPMODE == FALSE)
+      {
+        os_sprintf(temp, "\n+IPD,%d:", len);
+        uart0_sendStr(temp);
+        uart0_tx_buffer(pdata, len);
+      }
+      else
+      {
+        uart0_tx_buffer(pdata, len);
+        return;
+      }
+      at_backOk;
+    #else
+      os_printf("recv\n");
+      if(at_ipMux)
+      {
+        os_sprintf(temp, "%d%d%d%d",CANWII_SOH,CMD_IPD,linkId, len);
+        uart0_sendStr(temp);
+        uart0_tx_buffer(pdata, len);
+        uart_tx_one_char(CANWII_EOH);
+      }
+      else if(IPMODE == FALSE)
+      {
+        os_sprintf(temp, "%d%d%d%d",CANWII_SOH,CMD_IPD,255, len);
+        uart0_sendStr(temp);
+        uart0_tx_buffer(pdata, len);
+        uart_tx_one_char(CANWII_EOH);
+      }
+      else
+      {
+        uart0_tx_buffer(pdata, len);
+        return;
+      }
+      at_backOk;
+    #endif // VERBOSE
 }
 
 /**
@@ -348,7 +418,11 @@ at_tcpclient_sent_cb(void *arg)
   }
   specialAtState = TRUE;
   at_state = at_statIdle;
-	uart0_sendStr("\nSEND OK\n");
+  //TODO:change message
+  generalMSG.msgid=MSG_SEND;
+  generalMSG.param0=NULLPARAM;
+  sendGeneralMsg(generalMSG);
+  //uart0_sendStr("\nSEND OK\n");
 }
 
 ///**
@@ -404,12 +478,20 @@ at_tcpclient_connect_cb(void *arg)
   }
   if(at_ipMux)
   {
-    os_sprintf(temp,"%d,CONNECT\n", linkTemp->linkId);
-    uart0_sendStr(temp);
+    //TODO:change message
+    generalMSG.msgid=MSG_CONNECT;
+    generalMSG.param0=linkTemp->linkId;
+    sendGeneralMsg(generalMSG);
+    //os_sprintf(temp,"%d,CONNECT\n", linkTemp->linkId);
+    //uart0_sendStr(temp);
   }
   else
   {
-    uart0_sendStr("CONNECT\n");
+    //TODO:change message
+    generalMSG.msgid=MSG_CONNECT;
+    generalMSG.param0=-1;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("CONNECT\n");
   }
   at_backOk;
 
@@ -446,8 +528,12 @@ at_tcpclient_recon_cb(void *arg, sint8 errType)
     espconn_connect(pespconn);
     return;
   }
-  os_sprintf(temp,"%d,CLOSED\n", linkTemp->linkId);
-  uart0_sendStr(temp);
+  //TODO: change the message
+    generalMSG.msgid=MSG_CLOSED;
+    generalMSG.param0=linkTemp->linkId;
+    sendGeneralMsg(generalMSG);
+  //os_sprintf(temp,"%d,CLOSED\n", linkTemp->linkId);
+  //uart0_sendStr(temp);
 
   if(linkTemp->teToff == TRUE)
   {
@@ -534,7 +620,11 @@ at_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
   if(ipaddr == NULL)
   {
     linkTemp->linkEn = FALSE;
-    uart0_sendStr("DNS Fail\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_DNS_FAIL;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("DNS Fail\n");
     specialAtState = TRUE;
     at_state = at_statIdle;
     return;
@@ -562,8 +652,12 @@ at_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
       specialAtState = TRUE;
       at_state = at_statIdle;
       at_linkNum++;
-      os_sprintf(temp,"%d,CONNECT\n", linkTemp->linkId);
-      uart0_sendStr(temp);
+      //TODO: change the message
+      generalMSG.msgid=MSG_CONNECT;
+      generalMSG.param0=linkTemp->linkId;
+      sendGeneralMsg(generalMSG);
+      //os_sprintf(temp,"%d,CONNECT\n", linkTemp->linkId);
+      //uart0_sendStr(temp);
       at_backOk;
     }
   }
@@ -613,13 +707,21 @@ at_setupCmdCipstart(uint8_t id, char *pPara)
   }
   if(linkID >= at_linkMax)
   {
-    uart0_sendStr("ID ERROR\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_ID_ERROR;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("ID ERROR\n");
     return;
   }
   len = at_dataStrCpy(temp, pPara, 6);
   if(len == -1)
   {
-    uart0_sendStr("Link typ ERROR\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_LINK_TYPE_ERROR;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("Link typ ERROR\n");
     return;
   }
   if(os_strcmp(temp, "TCP") == 0)
@@ -632,7 +734,11 @@ at_setupCmdCipstart(uint8_t id, char *pPara)
   }
   else
   {
-    uart0_sendStr("Link typ ERROR\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_LINK_TYPE_ERROR;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("Link typ ERROR\n");
     return;
   }
   pPara += (len+3);
@@ -640,13 +746,21 @@ at_setupCmdCipstart(uint8_t id, char *pPara)
   os_printf("%s\n", ipTemp);
   if(len == -1)
   {
-    uart0_sendStr("IP ERROR\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_IP_ERROR;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("IP ERROR\n");
     return;
   }
   pPara += (len+2);
   if(*pPara != ',')
   {
-    uart0_sendStr("ENTRY ERROR\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_ENTRY_ERROR;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("ENTRY ERROR\n");
     return;
   }
   pPara += (1);
@@ -660,7 +774,11 @@ at_setupCmdCipstart(uint8_t id, char *pPara)
     {
       if((remotePort == 0)|(ipTemp[0] == 0))
       {
-        uart0_sendStr("Miss param\n");
+        //TODO: change the message
+        generalMSG.msgid=MSG_MISS_PARAM;
+        generalMSG.param0=1;
+        sendGeneralMsg(generalMSG);
+        //uart0_sendStr("Miss param\n");
         return;
       }
     }
@@ -670,7 +788,11 @@ at_setupCmdCipstart(uint8_t id, char *pPara)
       localPort = atoi(pPara);
       if(localPort == 0)
       {
-        uart0_sendStr("Miss param2\n");
+        //TODO: change the message
+        generalMSG.msgid=MSG_MISS_PARAM;
+        generalMSG.param0=2;
+        sendGeneralMsg(generalMSG);
+        //uart0_sendStr("Miss param2\n");
         return;
       }
       os_printf("local port:%d\n", localPort);
@@ -691,13 +813,21 @@ at_setupCmdCipstart(uint8_t id, char *pPara)
 
   if(pLink[linkID].linkEn)
   {
-    uart0_sendStr("ALREAY CONNECT\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_ALREADY_CONNECT;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("ALREADY CONNECT\n");
     return;
   }
   pLink[linkID].pCon = (struct espconn *)os_zalloc(sizeof(struct espconn));
   if (pLink[linkID].pCon == NULL)
   {
-    uart0_sendStr("CONNECT FAIL\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_CONNECT_FAIL;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("CONNECT FAIL\n");
     return;
   }
   pLink[linkID].pCon->type = linkType;
@@ -779,8 +909,12 @@ at_setupCmdCipstart(uint8_t id, char *pPara)
     else
     {
       ret = espconn_create(pLink[linkID].pCon);
-      os_sprintf(temp,"%d,CONNECT\n", linkID);
-      uart0_sendStr(temp);
+      //TODO: change the message
+      generalMSG.msgid=MSG_CONNECT;
+      generalMSG.param0=linkID;
+      sendGeneralMsg(generalMSG);
+      //os_sprintf(temp,"%d,CONNECT\n", linkID);
+      //uart0_sendStr(temp);
       at_linkNum++;
       at_backOk;
     }
@@ -825,12 +959,20 @@ at_tcpclient_discon_cb(void *arg)
   linkTemp->linkEn = FALSE;
   if(at_ipMux)
   {
-    os_sprintf(temp,"%d,CLOSED\n", linkTemp->linkId);
-    uart0_sendStr(temp);
+    //TODO: change the message
+    generalMSG.msgid=MSG_CLOSED;
+    generalMSG.param0=linkTemp->linkId;
+    sendGeneralMsg(generalMSG);
+    //os_sprintf(temp,"%d,CLOSED\n", linkTemp->linkId);
+    //uart0_sendStr(temp);
   }
   else
   {
-    uart0_sendStr("CLOSED\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_CLOSED;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("CLOSED\n");
   }
 
 
@@ -869,8 +1011,12 @@ at_tcpclient_discon_cb(void *arg)
         }
         else
         {
-          os_sprintf(temp,"%d,CLOSED\n", pLink[idTemp].linkId);
-          uart0_sendStr(temp);
+          //TODO: change the message
+          generalMSG.msgid=MSG_CLOSED;
+          generalMSG.param0=pLink[idTemp].linkId;
+          sendGeneralMsg(generalMSG);
+          //os_sprintf(temp,"%d,CLOSED\n", pLink[idTemp].linkId);
+          //uart0_sendStr(temp);
           pLink[idTemp].linkEn = FALSE;
           espconn_delete(pLink[idTemp].pCon);
           os_free(pLink[idTemp].pCon->proto.udp);
@@ -908,7 +1054,11 @@ at_setupCmdCipclose(uint8_t id, char *pPara)
   pPara++;
   if(at_ipMux == 0)
   {
-    uart0_sendStr("MUX=0\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_MUX;
+    generalMSG.param0=0;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("MUX=0\n");
     return;
   }
   linkID = atoi(pPara);
@@ -922,7 +1072,11 @@ at_setupCmdCipclose(uint8_t id, char *pPara)
     if(serverEn)
     {
       /* restart */
-      uart0_sendStr("we must restart\n");
+      //TODO: change the message
+      generalMSG.msgid=MSG_RESTART;
+      generalMSG.param0=NULLPARAM;
+      sendGeneralMsg(generalMSG);
+      //uart0_sendStr("we must restart\n");
       return;
     }
     for(linkID=0; linkID<at_linkMax; linkID++)
@@ -941,7 +1095,11 @@ at_setupCmdCipclose(uint8_t id, char *pPara)
         else
         {
           pLink[linkID].linkEn = FALSE;
-          os_sprintf(temp,"%d,CLOSED\n", linkID);
+          //TODO: change the message
+          generalMSG.msgid=MSG_CLOSED;
+          generalMSG.param0=linkID;
+          sendGeneralMsg(generalMSG);
+          //os_sprintf(temp,"%d,CLOSED\n", linkID);
           uart0_sendStr(temp);
           espconn_delete(pLink[linkID].pCon);
           os_free(pLink[linkID].pCon->proto.udp);
@@ -960,7 +1118,11 @@ at_setupCmdCipclose(uint8_t id, char *pPara)
   {
     if(pLink[linkID].linkEn == FALSE)
     {
-      uart0_sendStr("link is not\n");
+      //TODO: change the message
+      generalMSG.msgid=MSG_LINK_SET_FAIL;
+      generalMSG.param0=pLink[linkID].linkId;
+      sendGeneralMsg(generalMSG);
+      //uart0_sendStr("link is not\n");
       return;
     }
     if(pLink[linkID].teType == teServer)
@@ -974,8 +1136,12 @@ at_setupCmdCipclose(uint8_t id, char *pPara)
       else
       {
         pLink[linkID].linkEn = FALSE;
-        os_sprintf(temp,"%d,CLOSED\n", linkID);
-        uart0_sendStr(temp);
+        //TODO: change the message
+        generalMSG.msgid=MSG_CLOSED;
+        generalMSG.param0=linkID;
+        sendGeneralMsg(generalMSG);
+        //os_sprintf(temp,"%d,CLOSED\n", linkID);
+        //uart0_sendStr(temp);
         espconn_delete(pLink[linkID].pCon);
         at_linkNum--;
         at_backOk;
@@ -997,8 +1163,12 @@ at_setupCmdCipclose(uint8_t id, char *pPara)
       else
       {
         pLink[linkID].linkEn = FALSE;
-        os_sprintf(temp,"%d,CLOSED\n", linkID);
-        uart0_sendStr(temp);
+        //TODO: change the message
+        generalMSG.msgid=MSG_CLOSED;
+        generalMSG.param0=linkID;
+        sendGeneralMsg(generalMSG);
+        //os_sprintf(temp,"%d,CLOSED\n", linkID);
+        //uart0_sendStr(temp);
         espconn_delete(pLink[linkID].pCon);
         os_free(pLink[linkID].pCon->proto.udp);
         os_free(pLink[linkID].pCon);
@@ -1025,7 +1195,11 @@ at_exeCmdCipclose(uint8_t id)
 
   if(at_ipMux)
   {
-    uart0_sendStr("MUX=1\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_MUX;
+    generalMSG.param0=1;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("MUX=1\n");
     return;
   }
   if(pLink[0].linkEn)
@@ -1033,7 +1207,11 @@ at_exeCmdCipclose(uint8_t id)
     if(serverEn)
     {
       /* restart */
-      uart0_sendStr("we must restart\n");
+      //TODO: change the message
+      generalMSG.msgid=MSG_RESTART;
+      generalMSG.param0=NULLPARAM;
+      sendGeneralMsg(generalMSG);
+      //uart0_sendStr("we must restart\n");
       return;
     }
     else
@@ -1047,7 +1225,11 @@ at_exeCmdCipclose(uint8_t id)
       else
       {
         pLink[0].linkEn = FALSE;
-        uart0_sendStr("CLOSED\n");
+        //TODO: change the message
+        generalMSG.msgid=MSG_CLOSED;
+        generalMSG.param0=NULLPARAM;
+        sendGeneralMsg(generalMSG);
+        //uart0_sendStr("CLOSED\n");
         espconn_delete(pLink[0].pCon);
         os_free(pLink[0].pCon->proto.udp);
         os_free(pLink[0].pCon);
@@ -1103,7 +1285,11 @@ at_setupCmdCipsend(uint8_t id, char *pPara)
 
   if(IPMODE == TRUE)
   {
-    uart0_sendStr("IPMODE=1\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_IP_MODE;
+    generalMSG.param0=1;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("IPMODE=1\n");
     at_backError;
     return;
   }
@@ -1130,19 +1316,31 @@ at_setupCmdCipsend(uint8_t id, char *pPara)
   }
   if(pLink[sendingID].linkEn == FALSE)
   {
-    uart0_sendStr("link is not\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_LINK_SET_FAIL;
+    generalMSG.param0=pLink[sendingID].linkId;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("link is not\n");
     return;
   }
   at_sendLen = atoi(pPara);
   if(at_sendLen > 2048)
   {
-    uart0_sendStr("too long\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_TOO_LONG;
+    generalMSG.param0=at_sendLen;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("too long\n");
     return;
   }
   pPara = at_checkLastNum(pPara, 5);
   if((pPara == NULL)||(*pPara != CANWII_EOH))
   {
-    uart0_sendStr("type error\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_TYPE_ERROR;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("type error\n");
     return;
   }
 
@@ -1150,6 +1348,7 @@ at_setupCmdCipsend(uint8_t id, char *pPara)
 
   specialAtState = FALSE;
   at_state = at_statIpSending;
+  //TODO:Review
   uart0_sendStr("> ");
 }
 
@@ -1245,6 +1444,7 @@ at_exeCmdCipsend(uint8_t id)
   os_timer_disarm(&at_delayCheck);
   os_timer_setfn(&at_delayCheck, (os_timer_func_t *)at_ipDataTransparent, NULL);
   os_timer_arm(&at_delayCheck, 20, 0);
+  //TODO: change the message
   uart0_sendStr("\n>");
 }
 
@@ -1258,8 +1458,13 @@ void ICACHE_FLASH_ATTR
 at_queryCmdCipmux(uint8_t id)
 {
   char temp[32];
-  os_sprintf(temp, "%s:%d\n",
-             at_fun[id].at_cmdName, at_ipMux);
+
+  #ifdef VERBOSE
+    os_sprintf(temp, "%s:%d\n",at_fun[id].at_cmdName, at_ipMux);
+  #else
+    os_sprintf(temp, "%d%d%d%d",CANWII_SOH,at_fun[id].at_cmdCode, at_ipMux,CANWII_EOH);
+  #endif // VERBOSE
+
   uart0_sendStr(temp);
   at_backOk;
 }
@@ -1276,7 +1481,11 @@ at_setupCmdCipmux(uint8_t id, char *pPara)
   uint8_t muxTemp;
   if(mdState == m_linked)
   {
-    uart0_sendStr("link is builded\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_LINK_DONE;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("link is builded\n");
     return;
   }
   pPara++;
@@ -1317,12 +1526,20 @@ at_tcpserver_discon_cb(void *arg)
 
   if(at_ipMux)
   {
-    os_sprintf(temp,"%d,CLOSED\n", linkTemp->linkId);
-    uart0_sendStr(temp);
+    //TODO: change the message
+    generalMSG.msgid=MSG_CLOSED;
+    generalMSG.param0=linkTemp->linkId;
+    sendGeneralMsg(generalMSG);
+    //os_sprintf(temp,"%d,CLOSED\n", linkTemp->linkId);
+    //uart0_sendStr(temp);
   }
   else
   {
-    uart0_sendStr("CLOSED\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_CLOSED;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("CLOSED\n");
   }
   if(linkTemp->teToff == TRUE)
   {
@@ -1371,12 +1588,20 @@ at_tcpserver_recon_cb(void *arg, sint8 errType)
 
   if(at_ipMux)
   {
-    os_sprintf(temp, "%d,CONNECT\n", linkTemp->linkId);
-    uart0_sendStr(temp);
+    //TODO: change the message
+    generalMSG.msgid=MSG_CONNECT;
+    generalMSG.param0=linkTemp->linkId;
+    sendGeneralMsg(generalMSG);
+    //os_sprintf(temp, "%d,CONNECT\n", linkTemp->linkId);
+    //uart0_sendStr(temp);
   }
   else
   {
-    uart0_sendStr("CONNECT\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_CONNECT;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("CONNECT\n");
   }
   disAllFlag = false;
   if(linkTemp->teToff == TRUE)
@@ -1428,12 +1653,20 @@ at_tcpserver_listen(void *arg)
   espconn_regist_sentcb(pespconn, at_tcpclient_sent_cb);///////
   if(at_ipMux)
   {
-    os_sprintf(temp, "%d,CONNECT\n", i);
-    uart0_sendStr(temp);
+    //TODO: change the message
+    generalMSG.msgid=MSG_CONNECT;
+    generalMSG.param0=i;
+    sendGeneralMsg(generalMSG);
+    //os_sprintf(temp, "%d,CONNECT\n", i);
+    //uart0_sendStr(temp);
   }
   else
   {
-    uart0_sendStr("CONNECT\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_CONNECT;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("CONNECT\n");
   }
 }
 
@@ -1537,7 +1770,11 @@ at_setupCmdCipserver(uint8_t id, char *pPara)
   }
   if(serverEnTemp == serverEn)
   {
-    uart0_sendStr("no change\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_NO_CHANGE;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("no change\n");
     return;
   }
 
@@ -1546,7 +1783,11 @@ at_setupCmdCipserver(uint8_t id, char *pPara)
     pTcpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
     if (pTcpServer == NULL)
     {
-      uart0_sendStr("TcpServer Failure\n");
+      //TODO: change the message
+      generalMSG.msgid=MSG_TCP_SERVER_FAIL;
+      generalMSG.param0=NULLPARAM;
+      sendGeneralMsg(generalMSG);
+      //uart0_sendStr("TcpServer Failure\n");
       return;
     }
     pTcpServer->type = ESPCONN_TCP;
@@ -1599,7 +1840,11 @@ at_setupCmdCipserver(uint8_t id, char *pPara)
   else
   {
     /* restart */
-    uart0_sendStr("we must restart\n");
+    //TODO: change the message
+    generalMSG.msgid=MSG_RESTART;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    //uart0_sendStr("we must restart\n");
     return;
   }
   serverEn = serverEnTemp;
@@ -1615,8 +1860,12 @@ void ICACHE_FLASH_ATTR
 at_queryCmdCipmode(uint8_t id)
 {
 	char temp[32];
+  #ifdef VERBOSE
+    os_sprintf(temp, "%s:%d\n", at_fun[id].at_cmdName, IPMODE);
+  #else
+    os_sprintf(temp, "%d%d%d%d", CANWII_SOH,at_fun[id].at_cmdCode, IPMODE,CANWII_EOH);
+  #endif
 
-  os_sprintf(temp, "%s:%d\n", at_fun[id].at_cmdName, IPMODE);
   uart0_sendStr(temp);
   at_backOk;
 }
@@ -1653,8 +1902,14 @@ void ICACHE_FLASH_ATTR
 at_queryCmdCipsto(uint8_t id)
 {
   char temp[32];
-  os_sprintf(temp, "%s:%d\n",
+
+  #ifdef VERBOSE
+    os_sprintf(temp, "%s:%d\n",
              at_fun[id].at_cmdName, server_timeover);
+  #else
+    os_sprintf(temp, "%d%d%d%d", CANWII_SOH,at_fun[id].at_cmdCode, server_timeover,CANWII_EOH);
+  #endif
+
   uart0_sendStr(temp);
   at_backOk;
 }
@@ -1713,7 +1968,7 @@ Accept-Language: zh-CN,zh;q=0.8\n\n"
 #define KEY "4ec90c1abbd5ffc0b339f34560a2eb8d71733861"
 #endif
 
-
+//TODO:add other params
 struct espconn *pespconn;
 struct upgrade_server_info *upServer = NULL;
 struct esp_platform_saved_param {
@@ -1813,6 +2068,7 @@ at_upDate_discon_cb(void *arg)
   }
   else
   {
+    //TODO: change the message
     uart0_sendStr("+CIPUPDATE:4\n");
   }
 }
@@ -1833,7 +2089,8 @@ at_upDate_recv(void *arg, char *pusrdata, unsigned short len)
   uint8_t i;
 
   os_timer_disarm(&at_delayCheck);
-//  os_printf("get upRom:\r\n");
+
+//TODO: change the message
   uart0_sendStr("+CIPUPDATE:3\n");
 
 //  os_printf("%s",pusrdata);
@@ -1927,7 +2184,7 @@ at_upDate_connect_cb(void *arg)
   uint8_t user_bin[9] = {0};
 
   char *temp;
-
+  //TODO: change the message
   uart0_sendStr("+CIPUPDATE:2\n");
 
 
@@ -1997,6 +2254,7 @@ upServer_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
     at_state = at_statIdle;
     return;
   }
+  //TODO: change the message
   uart0_sendStr("+CIPUPDATE:1\n");
 
   if(host_ip.addr == 0 && ipaddr->addr != 0)
@@ -2036,6 +2294,118 @@ at_exeCmdCipappup(uint8_t id)
 {
 
 }
+
+//send general messages back
+void ICACHE_FLASH_ATTR
+sendGeneralMsg(struct_MSGType msgtype)
+{
+    char temp[32];
+    #ifdef VERBOSE
+        switch (msgtype.msgid){
+        case MSG_CONNECT:
+            if (msgtype.param0!=NULLPARAM){
+                os_sprintf(temp,"%d,CONNECT\n",msgtype.param0);
+            }
+            else{
+                os_sprintf(temp,"CONNECT\n");
+            }
+            break;
+        case MSG_SEND:
+            if (msgtype.param0!=NULLPARAM){
+                os_sprintf(temp,"SEND OK %d\n",msgtype.param0);
+            }
+            else{
+                os_sprintf(temp,"SEND OK\n");
+            }
+            break;
+        case MSG_CLOSED:
+            if (msgtype.param0!=NULLPARAM){
+                os_sprintf(temp,"%d,CLOSED\n",msgtype.param0);
+            }
+            else{
+                os_sprintf(temp,"CLOSED\n");
+            }
+            break;
+        case MSG_DNS_FAIL:
+            if (msgtype.param0!=NULLPARAM){
+                os_sprintf(temp,"DNS Fail %d\n",msgtype.param0);
+            }
+            else{
+                os_sprintf(temp,"DNS Fail\n");
+            }
+            break;
+        case MSG_ID_ERROR:
+            os_sprintf(temp,"ID ERROR\n");
+            break;
+        case MSG_LINK_TYPE_ERROR:
+            os_sprintf(temp,"LINK TYPE ERROR\n");
+            break;
+        case MSG_IP_ERROR:
+            os_sprintf(temp,"IP ERROR\n");
+            break;
+        case MSG_ENTRY_ERROR:
+            os_sprintf(temp,"ENTRY ERROR\n");
+            break;
+        case MSG_MISS_PARAM:
+            if (msgtype.param0!=NULLPARAM){
+                os_sprintf(temp,"MISS PARAM %d\n",msgtype.param0);
+            }
+            else{
+                os_sprintf(temp,"MISS PARAM\n");
+            }
+            break;
+        case MSG_ALREADY_CONNECT:
+            os_sprintf(temp,"ALREADY CONNECTED\n");
+            break;
+        case MSG_CONNECT_FAIL:
+            os_sprintf(temp,"CONNECT FAIL\n");
+            break;
+        case MSG_MUX:
+            if (msgtype.param0!=NULLPARAM){
+                os_sprintf(temp,"MUX=%d\n",msgtype.param0);
+            }
+            else{
+                os_sprintf(temp,"MUX\n");
+            }
+            break;
+        case MSG_RESTART:
+            os_sprintf(temp,"Restarting\n");
+            break;
+        case MSG_LINK_SET_FAIL:
+            if (msgtype.param0!=NULLPARAM){
+                os_sprintf(temp,"Link not set %d\n",msgtype.param0);
+            }
+            else{
+                os_sprintf(temp,"Link not set\n");
+            }
+            break;
+        case MSG_TOO_LONG:
+            if (msgtype.param0!=NULLPARAM){
+                os_sprintf(temp,"Message length %d > 2048\n",msgtype.param0);
+            }
+            else{
+                os_sprintf(temp,"Message too big\n");
+            }
+            break;
+        case MSG_TYPE_ERROR:
+            os_sprintf(temp,"TYPE ERROR\n");
+            break;
+        case MSG_LINK_DONE:
+            os_sprintf(temp,"LINK SET\n");
+            break;
+        case MSG_NO_CHANGE:
+            os_sprintf(temp,"NO CHANGE\n");
+            break;
+        case MSG_TCP_SERVER_FAIL:
+            os_sprintf(temp,"TCP SERVER FAIL\n");
+            break;
+        }
+    #else
+
+    #endif // VERBOSE
+    uart0_sendStr(temp);
+}
+
 
 /**
   * @}

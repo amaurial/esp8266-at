@@ -87,7 +87,12 @@ at_queryCmdCwmode(uint8_t id)
   char temp[32];
 
   at_wifiMode = wifi_get_opmode();
-  os_sprintf(temp, "%s:%d\n", at_fun[id].at_cmdName, at_wifiMode);
+  #ifdef VERBOSE
+    os_sprintf(temp, "%s:%d\n", at_fun[id].at_cmdName, at_wifiMode);
+  #else
+    os_sprintf(temp, "%d%d%d%d\n", CANWII_SOH, at_fun[id].at_cmdCode, at_wifiMode,CANWII_EOH);
+  #endif // VERBOSE
+
   uart0_sendStr(temp);
   at_backOk;
 }
@@ -153,9 +158,16 @@ scan_done(void *arg, STATUS status)
       {
         os_memcpy(ssid, bss_link->ssid, 32);
       }
-      os_sprintf(temp,"+CWLAP:(%d,\"%s\",%d,\""MACSTR"\",%d)\n",
+      #ifdef VERBOSE
+        os_sprintf(temp,"+CWLAP:(%d,\"%s\",%d,\""MACSTR"\",%d)\n",
                  bss_link->authmode, ssid, bss_link->rssi,
                  MAC2STR(bss_link->bssid),bss_link->channel);
+      #else
+        os_sprintf(temp,"+CWLAP:(%d,\"%s\",%d,\""MACSTR"\",%d)\n",CANWII_SOH,CMD_CWLAP,
+                 bss_link->authmode, ssid, bss_link->rssi,
+                 MAC2STR(bss_link->bssid),bss_link->channel);
+      #endif // VERBOSE
+
       uart0_sendStr(temp);
       bss_link = bss_link->next.stqe_next;
     }
