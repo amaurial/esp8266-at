@@ -2399,6 +2399,9 @@ sendGeneralMsg(struct_MSGType msgtype)
         case MSG_TCP_SERVER_FAIL:
             os_sprintf(temp,"TCP SERVER FAIL\n");
             break;
+        case MSG_NOAP:
+            os_sprintf(temp,"NO AP\n");
+            break;
         }
     #else
 

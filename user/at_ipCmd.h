@@ -39,36 +39,7 @@ typedef struct
 	struct espconn *pCon;
 }at_linkConType;
 
-typedef enum{
-    MSG_CONNECT,
-    MSG_SEND,
-    MSG_CLOSED,
-    MSG_DNS_FAIL,
-    MSG_ID_ERROR,
-    MSG_LINK_TYPE_ERROR,
-    MSG_IP_ERROR,
-    MSG_ENTRY_ERROR,
-    MSG_MISS_PARAM,
-    MSG_ALREADY_CONNECT,
-    MSG_CONNECT_FAIL,
-    MSG_MUX,
-    MSG_RESTART,
-    MSG_LINK_SET_FAIL,
-    MSG_IP_MODE,
-    MSG_TOO_LONG,
-    MSG_TYPE_ERROR,
-    MSG_LINK_DONE,
-    MSG_NO_CHANGE,
-    MSG_TCP_SERVER_FAIL
-}enum_msgType;
 
-
-typedef struct
-{
-    enum_msgType msgid;
-    uint8_t param0;
-}struct_MSGType;
-#define NULLPARAM 255
 
 void sendGeneralMsg(struct_MSGType msgtype);
 
