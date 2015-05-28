@@ -72,6 +72,7 @@
 #define CMD_ATE 0x26
 #define CMD_MPINFO 0x27
 #define CMD_IPD 0x28
+#define CMD_MERG 0x29
 
 #define CMD_QUERY '?'
 #define CMD_EQUAL '='
@@ -127,6 +128,13 @@ typedef struct
 {
   uint32_t baud;
   uint32_t saved;
+  char ssid[16];
+  char paswd[16];
+  uint8_t cwmode;
+  uint8_t cwmux;
+  uint8_t port;
+  uint16_t timeout;//milliseconds
+
 }at_uartType;
 
 #define NULLPARAM 255
@@ -162,6 +170,13 @@ typedef struct
     enum_msgType msgid;
     uint8_t param0;
 }struct_MSGType;
+
+typedef struct{
+    char ssid[10];
+    char ssid_password[10];
+
+
+}structNodeParam;
 
 void at_init(void);
 void at_cmdProcess(uint8_t *pAtRcvData);

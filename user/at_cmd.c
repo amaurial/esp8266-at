@@ -41,7 +41,6 @@ at_cmdSearch(uint8_t *pCmd)
         return i;
       }
     }
-
   return -1;
 }
 /**

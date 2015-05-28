@@ -14,6 +14,8 @@
 #define CANWII_TCP 1
 #define CANWII_UDP 0
 //Merg OPCS
+//after this value the esp expect:
+//ssid,ssid_passwd,cwmode,cwmux,port,timeout
 #define CANWII_CONFIGESP 0x01
 #define CANWII_START_TCP_SESSION 0x02
 #define CANWII_END_TCP_SESSION 0x03
