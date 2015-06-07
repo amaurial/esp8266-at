@@ -41,7 +41,7 @@ typedef struct
 
 
 
-void sendGeneralMsg(struct_MSGType msgtype);
+
 
 void at_testCmdGeneric(uint8_t id);
 
@@ -61,11 +61,14 @@ void at_exeCmdCipsend(uint8_t id);
 
 void at_queryCmdCipmux(uint8_t id);
 void at_setupCmdCipmux(uint8_t id, char *pPara);
+uint8_t at_setupCmdCipmuxEsp(uint8_t mux);
 
 void at_setupCmdCipserver(uint8_t id, char *pPara);
+uint8_t at_setupCmdCipserverEsp(uint8_t mode, int32_t port);
 
 void at_queryCmdCipmode(uint8_t id);
 void at_setupCmdCipmode(uint8_t id, char *pPara);
+uint8_t at_setupCmdCipmodeEsp(uint8_t mode);
 
 void at_queryCmdCipsto(uint8_t id);
 void at_setupCmdCipsto(uint8_t id, char *pPara);

@@ -129,13 +129,22 @@ typedef struct
   uint32_t baud;
   uint32_t saved;
   char ssid[16];
-  char paswd[16];
+  uint8_t ssidlen;
+  char passwd[16];
+  uint8_t passwdlen;
+  uint8_t channel;
+  uint8_t wpa;
   uint8_t cwmode;
   uint8_t cwmux;
   uint8_t port;
   uint16_t timeout;//milliseconds
-
-}at_uartType;
+  uint8_t tcp_udp_mode; //0=TCP,1=UDP
+  uint8_t dhcp_enable;//0=enable dhcp,1=disable
+  uint8_t dhcp_mode;//0=ESP8266 softAP,1=ESP8266 station,2=both softAP and station
+  uint8_t server_mode;//0=server,1=client
+  uint8_t cmdid;
+  uint8_t cmdsubid;
+}esp_StoreType;
 
 #define NULLPARAM 255
 

@@ -75,7 +75,7 @@ at_testCmdGeneric(uint8_t id)
     #ifdef VERBOSE
         os_sprintf(temp, "%s:(1-3)\n", at_fun[id].at_cmdName);
     #else
-        os_sprintf(temp, "%d%d%d",CANWII_SOH, at_fun[id].at_cmdCode,CANWII_EOH);
+        os_sprintf(temp, "%d%d%d\n",CANWII_SOH, at_fun[id].at_cmdCode,CANWII_EOH);
     #endif // VERBOSE
     uart0_sendStr(temp);
     at_backOk;
@@ -102,7 +102,7 @@ at_setupCmdCifsr(uint8_t id, char *pPara)
     #ifdef VERBOSE
         uart0_sendStr("IP ERROR\n");
     #else
-        os_sprintf(temp, "%d%d%d",CANWII_SOH, RSP_IP_ERROR,CANWII_EOH);
+        os_sprintf(temp, "%d%d%d\n",CANWII_SOH, RSP_IP_ERROR,CANWII_EOH);
     #endif // VERBOSE
 
 
@@ -157,7 +157,7 @@ at_exeCmdCifsr(uint8_t id)//add get station ip and ap ip
     #else
         //<SOH><CMD><P1><IP><P2><MAC><EOH>
 
-        os_sprintf(temp, "%d%d%d%d.%d.%d.%s%d",CANWII_SOH, at_fun[id].at_cmdCode,
+        os_sprintf(temp, "%d%d%d%d.%d.%d.%s%d\n",CANWII_SOH, at_fun[id].at_cmdCode,
                     1,IP2STR(&pTempIp.ip),2,MAC2STR(bssid),CANWII_EOH);
         uart0_sendStr(temp);
     #endif // VERBOSE
@@ -186,7 +186,7 @@ at_exeCmdCifsr(uint8_t id)//add get station ip and ap ip
                    MAC2STR(bssid));
         uart0_sendStr(temp);
     #else
-        os_sprintf(temp, "%d%d%d%d.%d.%d.%s%d",CANWII_SOH, at_fun[id].at_cmdCode,
+        os_sprintf(temp, "%d%d%d%d.%d.%d.%s%d\n",CANWII_SOH, at_fun[id].at_cmdCode,
                     1,IP2STR(&pTempIp.ip),2,MAC2STR(bssid),CANWII_EOH);
         uart0_sendStr(temp);
     #endif // VERBOSE
@@ -212,7 +212,7 @@ at_exeCmdCipstatus(uint8_t id)
         os_sprintf(temp, "STATUS:%d\n",
          mdState);
     #else
-        os_sprintf(temp, "%d%d",CANWII_SOH, CMD_CIPSTATUS);
+        os_sprintf(temp, "%d%d\n",CANWII_SOH, CMD_CIPSTATUS);
     #endif // VERBOSE
   uart0_sendStr(temp);
   if(serverEn)
@@ -376,14 +376,14 @@ at_sendData(char *pdata, unsigned short len,uint8_t linkId)
       os_printf("recv\n");
       if(at_ipMux)
       {
-        os_sprintf(temp, "%d%d%d%d",CANWII_SOH,CMD_IPD,linkId, len);
+        os_sprintf(temp, "%d%d%d%d\n",CANWII_SOH,CMD_IPD,linkId, len);
         uart0_sendStr(temp);
         uart0_tx_buffer(pdata, len);
         uart_tx_one_char(CANWII_EOH);
       }
       else if(IPMODE == FALSE)
       {
-        os_sprintf(temp, "%d%d%d%d",CANWII_SOH,CMD_IPD,255, len);
+        os_sprintf(temp, "%d%d%d%d\n",CANWII_SOH,CMD_IPD,255, len);
         uart0_sendStr(temp);
         uart0_tx_buffer(pdata, len);
         uart_tx_one_char(CANWII_EOH);
@@ -925,6 +925,9 @@ at_setupCmdCipstart(uint8_t id, char *pPara)
   }
 }
 
+
+
+
 /**
   * @brief  Tcp client disconnect success callback function.
   * @param  arg: contain the ip link information
@@ -1462,7 +1465,7 @@ at_queryCmdCipmux(uint8_t id)
   #ifdef VERBOSE
     os_sprintf(temp, "%s:%d\n",at_fun[id].at_cmdName, at_ipMux);
   #else
-    os_sprintf(temp, "%d%d%d%d",CANWII_SOH,at_fun[id].at_cmdCode, at_ipMux,CANWII_EOH);
+    os_sprintf(temp, "%d%d%d%d\n",CANWII_SOH,at_fun[id].at_cmdCode, at_ipMux,CANWII_EOH);
   #endif // VERBOSE
 
   uart0_sendStr(temp);
@@ -1479,26 +1482,9 @@ void ICACHE_FLASH_ATTR
 at_setupCmdCipmux(uint8_t id, char *pPara)
 {
   uint8_t muxTemp;
-  if(mdState == m_linked)
-  {
-    //TODO: change the message
-    generalMSG.msgid=MSG_LINK_DONE;
-    generalMSG.param0=NULLPARAM;
-    sendGeneralMsg(generalMSG);
-    //uart0_sendStr("link is builded\n");
-    return;
-  }
   pPara++;
   muxTemp = atoi(pPara);
-  if(muxTemp == 1)
-  {
-    at_ipMux = TRUE;
-  }
-  else if(muxTemp == 0)
-  {
-    at_ipMux = FALSE;
-  }
-  else
+  if (at_setupCmdCipmuxEsp(muxTemp)!=0)
   {
     at_backError;
     return;
@@ -1506,6 +1492,31 @@ at_setupCmdCipmux(uint8_t id, char *pPara)
   at_backOk;
 }
 
+uint8_t ICACHE_FLASH_ATTR
+at_setupCmdCipmuxEsp(uint8_t mux)
+{
+  if(mdState == m_linked)
+  {
+    //TODO: change the message
+    generalMSG.msgid=MSG_LINK_DONE;
+    generalMSG.param0=NULLPARAM;
+    sendGeneralMsg(generalMSG);
+    return 1;
+  }
+  if(mux == 1)
+  {
+    at_ipMux = TRUE;
+  }
+  else if(mux == 0)
+  {
+    at_ipMux = FALSE;
+  }
+  else
+  {
+    return 1;
+  }
+  return 0;
+}
 
 /**
   * @brief  Tcp server disconnect success callback function.
@@ -1733,13 +1744,7 @@ at_setupCmdCipserver(uint8_t id, char *pPara)
 {
   BOOL serverEnTemp;
   int32_t port;
-  char temp[32];
 
-  if(at_ipMux == FALSE)
-  {
-    at_backError;
-    return;
-  }
   pPara++;
   serverEnTemp = atoi(pPara);
   pPara++;
@@ -1760,7 +1765,7 @@ at_setupCmdCipserver(uint8_t id, char *pPara)
     }
     else
     {
-      port = 333;
+      port = 0;
     }
   }
   else
@@ -1768,32 +1773,61 @@ at_setupCmdCipserver(uint8_t id, char *pPara)
     at_backError;
     return;
   }
-  if(serverEnTemp == serverEn)
+
+    if (at_setupCmdCipserverEsp(serverEnTemp,port)!=0){
+        at_backError;
+        return;
+    }
+  at_backOk;
+}
+
+uint8_t ICACHE_FLASH_ATTR
+at_setupCmdCipserverEsp(uint8_t mode, int32_t port)
+{
+  int32_t tport;
+
+  tport=port;
+  if(at_ipMux == FALSE)
   {
-    //TODO: change the message
+    return 1;
+  }
+  if(mode == 0 && tport<=0)
+  {
+    return 1;
+  }
+  else if(mode == 1)
+  {
+    if(tport<=0){
+      tport = 333;
+    }
+  }
+  else
+  {
+    return 1;
+  }
+
+  if(mode == serverEn)
+  {
     generalMSG.msgid=MSG_NO_CHANGE;
     generalMSG.param0=NULLPARAM;
     sendGeneralMsg(generalMSG);
-    //uart0_sendStr("no change\n");
     return;
   }
 
-  if(serverEnTemp)
+  if(mode==1)
   {
     pTcpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
     if (pTcpServer == NULL)
     {
-      //TODO: change the message
       generalMSG.msgid=MSG_TCP_SERVER_FAIL;
       generalMSG.param0=NULLPARAM;
       sendGeneralMsg(generalMSG);
-      //uart0_sendStr("TcpServer Failure\n");
       return;
     }
     pTcpServer->type = ESPCONN_TCP;
     pTcpServer->state = ESPCONN_NONE;
     pTcpServer->proto.tcp = (esp_tcp *)os_zalloc(sizeof(esp_tcp));
-    pTcpServer->proto.tcp->local_port = port;
+    pTcpServer->proto.tcp->local_port = tport;
     espconn_regist_connectcb(pTcpServer, at_tcpserver_listen);
     espconn_accept(pTcpServer);
     espconn_regist_time(pTcpServer, server_timeover, 0);
@@ -1845,10 +1879,10 @@ at_setupCmdCipserver(uint8_t id, char *pPara)
     generalMSG.param0=NULLPARAM;
     sendGeneralMsg(generalMSG);
     //uart0_sendStr("we must restart\n");
-    return;
+    return 1;
   }
-  serverEn = serverEnTemp;
-  at_backOk;
+  serverEn = mode;
+  return 0;
 }
 
 /**
@@ -1863,7 +1897,7 @@ at_queryCmdCipmode(uint8_t id)
   #ifdef VERBOSE
     os_sprintf(temp, "%s:%d\n", at_fun[id].at_cmdName, IPMODE);
   #else
-    os_sprintf(temp, "%d%d%d%d", CANWII_SOH,at_fun[id].at_cmdCode, IPMODE,CANWII_EOH);
+    os_sprintf(temp, "%d%d%d%d\n", CANWII_SOH,at_fun[id].at_cmdCode, IPMODE,CANWII_EOH);
   #endif
 
   uart0_sendStr(temp);
@@ -1880,22 +1914,28 @@ void ICACHE_FLASH_ATTR
 at_setupCmdCipmode(uint8_t id, char *pPara)
 {
 	uint8_t mode;
-  char temp[32];
+    pPara++;
+    mode = atoi(pPara);
+    if (at_setupCmdCipmodeEsp(mode)==0){
+        at_backOk;
+    }else {
+        at_backError;
+    }
 
-  pPara++;
+}
+uint8_t ICACHE_FLASH_ATTR
+at_setupCmdCipmodeEsp(uint8_t mode )
+{
   if((at_ipMux) || (serverEn))
   {
-  	at_backError;
-  	return;
+  	return 1;
   }
-  mode = atoi(pPara);
   if(mode > 1)
   {
-  	at_backError;
-  	return;
+  	return 1;
   }
   IPMODE = mode;
-  at_backOk;
+  return 0;
 }
 
 void ICACHE_FLASH_ATTR
@@ -1907,7 +1947,7 @@ at_queryCmdCipsto(uint8_t id)
     os_sprintf(temp, "%s:%d\n",
              at_fun[id].at_cmdName, server_timeover);
   #else
-    os_sprintf(temp, "%d%d%d%d", CANWII_SOH,at_fun[id].at_cmdCode, server_timeover,CANWII_EOH);
+    os_sprintf(temp, "%d%d%d%d\n", CANWII_SOH,at_fun[id].at_cmdCode, server_timeover,CANWII_EOH);
   #endif
 
   uart0_sendStr(temp);
@@ -2295,119 +2335,7 @@ at_exeCmdCipappup(uint8_t id)
 
 }
 
-//send general messages back
-void ICACHE_FLASH_ATTR
-sendGeneralMsg(struct_MSGType msgtype)
-{
-    char temp[32];
-    #ifdef VERBOSE
-        switch (msgtype.msgid){
-        case MSG_CONNECT:
-            if (msgtype.param0!=NULLPARAM){
-                os_sprintf(temp,"%d,CONNECT\n",msgtype.param0);
-            }
-            else{
-                os_sprintf(temp,"CONNECT\n");
-            }
-            break;
-        case MSG_SEND:
-            if (msgtype.param0!=NULLPARAM){
-                os_sprintf(temp,"SEND OK %d\n",msgtype.param0);
-            }
-            else{
-                os_sprintf(temp,"SEND OK\n");
-            }
-            break;
-        case MSG_CLOSED:
-            if (msgtype.param0!=NULLPARAM){
-                os_sprintf(temp,"%d,CLOSED\n",msgtype.param0);
-            }
-            else{
-                os_sprintf(temp,"CLOSED\n");
-            }
-            break;
-        case MSG_DNS_FAIL:
-            if (msgtype.param0!=NULLPARAM){
-                os_sprintf(temp,"DNS Fail %d\n",msgtype.param0);
-            }
-            else{
-                os_sprintf(temp,"DNS Fail\n");
-            }
-            break;
-        case MSG_ID_ERROR:
-            os_sprintf(temp,"ID ERROR\n");
-            break;
-        case MSG_LINK_TYPE_ERROR:
-            os_sprintf(temp,"LINK TYPE ERROR\n");
-            break;
-        case MSG_IP_ERROR:
-            os_sprintf(temp,"IP ERROR\n");
-            break;
-        case MSG_ENTRY_ERROR:
-            os_sprintf(temp,"ENTRY ERROR\n");
-            break;
-        case MSG_MISS_PARAM:
-            if (msgtype.param0!=NULLPARAM){
-                os_sprintf(temp,"MISS PARAM %d\n",msgtype.param0);
-            }
-            else{
-                os_sprintf(temp,"MISS PARAM\n");
-            }
-            break;
-        case MSG_ALREADY_CONNECT:
-            os_sprintf(temp,"ALREADY CONNECTED\n");
-            break;
-        case MSG_CONNECT_FAIL:
-            os_sprintf(temp,"CONNECT FAIL\n");
-            break;
-        case MSG_MUX:
-            if (msgtype.param0!=NULLPARAM){
-                os_sprintf(temp,"MUX=%d\n",msgtype.param0);
-            }
-            else{
-                os_sprintf(temp,"MUX\n");
-            }
-            break;
-        case MSG_RESTART:
-            os_sprintf(temp,"Restarting\n");
-            break;
-        case MSG_LINK_SET_FAIL:
-            if (msgtype.param0!=NULLPARAM){
-                os_sprintf(temp,"Link not set %d\n",msgtype.param0);
-            }
-            else{
-                os_sprintf(temp,"Link not set\n");
-            }
-            break;
-        case MSG_TOO_LONG:
-            if (msgtype.param0!=NULLPARAM){
-                os_sprintf(temp,"Message length %d > 2048\n",msgtype.param0);
-            }
-            else{
-                os_sprintf(temp,"Message too big\n");
-            }
-            break;
-        case MSG_TYPE_ERROR:
-            os_sprintf(temp,"TYPE ERROR\n");
-            break;
-        case MSG_LINK_DONE:
-            os_sprintf(temp,"LINK SET\n");
-            break;
-        case MSG_NO_CHANGE:
-            os_sprintf(temp,"NO CHANGE\n");
-            break;
-        case MSG_TCP_SERVER_FAIL:
-            os_sprintf(temp,"TCP SERVER FAIL\n");
-            break;
-        case MSG_NOAP:
-            os_sprintf(temp,"NO AP\n");
-            break;
-        }
-    #else
 
-    #endif // VERBOSE
-    uart0_sendStr(temp);
-}
 
 
 /**

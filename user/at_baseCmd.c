@@ -19,6 +19,7 @@
 #include "osapi.h"
 #include "c_types.h"
 #include "at.h"
+#include "at_utils.h"
 #include "at_baseCmd.h"
 #include "user_interface.h"
 #include "at_version.h"
@@ -230,7 +231,7 @@ user_esp_platform_save_param(void *param, uint16 len)
 void ICACHE_FLASH_ATTR
 at_setupCmdIpr(uint8_t id, char *pPara)
 {
-  at_uartType tempUart;
+  esp_StoreType tempUart;
 
   pPara++;
   tempUart.baud = atoi(pPara);
@@ -250,7 +251,7 @@ at_setupCmdIpr(uint8_t id, char *pPara)
   os_delay_us(10000);
   uart_div_modify(0, UART_CLK_FREQ / tempUart.baud);
   tempUart.saved = 1;
-  user_esp_platform_save_param((uint32 *)&tempUart, sizeof(at_uartType));
+  user_esp_platform_save_param((uint32 *)&tempUart, sizeof(esp_StoreType));
   at_backOk;
 }
 

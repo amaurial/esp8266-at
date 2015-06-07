@@ -15,12 +15,13 @@
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "user_interface.h"
+
 #include "at.h"
 #include "at_wifiCmd.h"
 #include "osapi.h"
 #include "c_types.h"
 #include "mem.h"
+#include "at_utils.h"
 
 at_mdStateType mdState = m_unlink;
 
@@ -30,7 +31,7 @@ extern at_funcationType at_fun[];
 
 uint8_t at_wifiMode;
 os_timer_t at_japDelayChack;
-struct_MSGType generalMSG;
+//struct_MSGType generalMSG;
 
 /** @defgroup AT_WSIFICMD_Functions
   * @{
@@ -77,6 +78,8 @@ at_dataStrCpy(void *pDest, const void *pSrc, int8_t maxLen)
 }
 
 
+
+
 /**
   * @brief  Query commad of set wifi mode.
   * @param  id: commad id number
@@ -108,14 +111,22 @@ void ICACHE_FLASH_ATTR
 at_setupCmdCwmode(uint8_t id, char *pPara)
 {
   uint8_t mode;
-  char temp[32];
-
   pPara++;
   mode = atoi(pPara);
+  if (at_setupCmdCwmodeEsp(mode)==0){
+    at_backOk;
+    return;
+  }
+  at_backError;
+}
+
+uint8_t ICACHE_FLASH_ATTR
+at_setupCmdCwmodeEsp(uint8_t mode)
+{
   if(mode == at_wifiMode)
   {
     at_backOk;
-    return;
+    return 0;
   }
   if((mode >= 1) && (mode <= 3))
   {
@@ -123,12 +134,9 @@ at_setupCmdCwmode(uint8_t id, char *pPara)
     wifi_set_opmode(mode);
     ETS_UART_INTR_ENABLE();
     at_wifiMode = mode;
-    at_backOk;
+    return 0;
   }
-  else
-  {
-    at_backError;
-  }
+  return 1;
 }
 
 /**
@@ -164,7 +172,7 @@ scan_done(void *arg, STATUS status)
                  bss_link->authmode, ssid, bss_link->rssi,
                  MAC2STR(bss_link->bssid),bss_link->channel);
       #else
-        os_sprintf(temp,"%d%d%d,%d,%d,%d,%d%d)\n",CANWII_SOH,CMD_CWLAP,
+        os_sprintf(temp,"%d%d%d,%d,%d,%d,%d%d\n",CANWII_SOH,CMD_CWLAP,
                  bss_link->authmode, ssid, bss_link->rssi,
                  MAC2STR(bss_link->bssid),bss_link->channel,CANWII_EOH);
       #endif // VERBOSE
@@ -274,7 +282,6 @@ at_queryCmdCwjap(uint8_t id)
   struct station_config stationConf;
   wifi_station_get_config(&stationConf);
   struct ip_info pTempIp;
-  struct struct_MSGType msgtype;
 
   wifi_get_ip_info(0x00, &pTempIp);
   if(pTempIp.ip.addr == 0)
@@ -290,7 +297,7 @@ at_queryCmdCwjap(uint8_t id)
     #ifdef VERBOSE
         os_sprintf(temp, "%s:\"%s\"\n", at_fun[id].at_cmdName, stationConf.ssid);
     #else
-        os_sprintf(temp, "%d%d%d%d",CANWII_SOH, at_fun[id].at_cmdCode, stationConf.ssid,CANWII_EOH);
+        os_sprintf(temp, "%d%d%d%d\n",CANWII_SOH, at_fun[id].at_cmdCode, stationConf.ssid,CANWII_EOH);
     #endif
 
     uart0_sendStr(temp);
@@ -333,7 +340,7 @@ at_japChack(void *arg)
     #ifdef VERBOSE
         os_sprintf(temp,"+CWJAP:%d\n",japState);
     #else
-        os_sprintf(temp,"%d%d%d%d",CANWII_SOH,CMD_CWJAP,japState,CANWII_EOH);
+        os_sprintf(temp,"%d%d%d%d\n",CANWII_SOH,CMD_CWJAP,japState,CANWII_EOH);
     #endif // VERBOSE
 
     uart0_sendStr(temp);
@@ -436,7 +443,7 @@ at_queryCmdCwsap(uint8_t id)
              apConfig.channel,
              apConfig.authmode);
   #else
-    os_sprintf(temp,"%d%d%d,%d,%d,%d%d",CANWII_SOH
+    os_sprintf(temp,"%d%d%d,%d,%d,%d%d\n",CANWII_SOH
              at_fun[id].at_cmdCode,
              apConfig.ssid,
              apConfig.password,
@@ -457,28 +464,19 @@ at_queryCmdCwsap(uint8_t id)
 void ICACHE_FLASH_ATTR
 at_setupCmdCwsap(uint8_t id, char *pPara)
 {
-  char temp[64];
   int8_t len,passLen;
   struct softap_config apConfig;
 
   os_bzero(&apConfig, sizeof(struct softap_config));
   wifi_softap_get_config(&apConfig);
 
-  if(at_wifiMode == STATION_MODE)
-  {
-    at_backError;
-
-    return;
-  }
   pPara++;
   len = at_dataStrCpy(apConfig.ssid, pPara, 32);
   apConfig.ssid_len = len;
 
   if(len < 1)
   {
-
     at_backError;
-
     return;
   }
   pPara += (len+3);
@@ -489,37 +487,53 @@ at_setupCmdCwsap(uint8_t id, char *pPara)
     return;
   }
   pPara += (passLen+3);
-
   apConfig.channel = atoi(pPara);
-  if(apConfig.channel<1 || apConfig.channel>13)
-  {
-    at_backError;
-    return;
-  }
+
   pPara++;
   pPara = strchr(pPara, ',');
   pPara++;
-
   apConfig.authmode = atoi(pPara);
-  if(apConfig.authmode >= 5)
-  {
 
-    at_backError;
-
+  if (at_setupCmdCwsapEsp(&apConfig,passLen)==0){
+    at_backOk;
     return;
   }
-  if((apConfig.authmode != 0)&&(passLen < 5))
-  {
-    at_backError;
+  at_backError;
 
-    return;
-  }
-  ETS_UART_INTR_DISABLE();
-  wifi_softap_set_config(&apConfig);
-  ETS_UART_INTR_ENABLE();
-  at_backOk;
 }
 
+uint8_t ICACHE_FLASH_ATTR
+at_setupCmdCwsapEsp(struct softap_config *apConfig,uint8_t passwdlen)
+{
+    bool ret;
+
+    if(at_wifiMode == STATION_MODE)
+    {
+        return 1;
+    }
+
+    if(apConfig->ssid_len < 1 || passwdlen==-1)
+    {
+        return 1;
+    }
+    if(apConfig->channel<1 || apConfig->channel>13)
+    {
+        return 1;
+    }
+    if(apConfig->authmode >= 5)
+    {
+        return 1;
+    }
+    if((apConfig->authmode != 0)&&(passwdlen < 5))
+    {
+        return 1;
+    }
+    ETS_UART_INTR_DISABLE();
+    ret=wifi_softap_set_config(apConfig);
+    ETS_UART_INTR_ENABLE();
+    return ((ret==true)?0:1);
+
+}
 void ICACHE_FLASH_ATTR
 at_exeCmdCwlif(uint8_t id)
 {
@@ -539,7 +553,7 @@ at_exeCmdCwlif(uint8_t id)
         os_sprintf(temp, "%d.%d.%d.%d,"MACSTR"\n",
                IP2STR(&station->ip), MAC2STR(station->bssid));
     #else
-        os_sprintf(temp, "%d%d%d,%d%d",CANWII_SOH,CMD_CWLIF,
+        os_sprintf(temp, "%d%d%d,%d%d\n",CANWII_SOH,CMD_CWLIF,
                IP2STR(&station->ip), MAC2STR(station->bssid),CANWII_EOH);
     #endif // VERBOSE
 
@@ -563,8 +577,6 @@ void ICACHE_FLASH_ATTR
 at_setupCmdCwdhcp(uint8_t id, char *pPara)
 {
 	uint8_t mode,opt;
-	int8_t ret = 0;
-
 	pPara++;
 	mode = 0;
 	mode = atoi(pPara);
@@ -572,8 +584,18 @@ at_setupCmdCwdhcp(uint8_t id, char *pPara)
 	pPara = strchr(pPara, ',');
 	pPara++;
 	opt = atoi(pPara);
+    if (at_setupCmdCwdhcpEsp(mode,opt)!=0){
+        at_backError;
+    }
+	at_backOk;
+	return;
+}
 
-	switch (mode)
+uint8_t ICACHE_FLASH_ATTR
+at_setupCmdCwdhcpEsp(uint8_t mode, uint8_t opt)
+{
+    int8_t ret = 0;
+    switch (mode)
 	{
 	case 0:
 	  if(opt)
@@ -616,12 +638,10 @@ at_setupCmdCwdhcp(uint8_t id, char *pPara)
 	}
 	if(ret)
 	{
-	  at_backOk;
+	  return 0;
 	}
-	else
-	{
-		at_backError;
-	}
+
+	return 1;
 }
 
 void ICACHE_FLASH_ATTR
@@ -637,7 +657,7 @@ at_queryCmdCipstamac(uint8_t id)
   #ifdef VERBOSE
     os_sprintf(temp,"%s:\""MACSTR"\" %s\n", at_fun[id].at_cmdName, MAC2STR(bssid));
   #else
-    os_sprintf(temp, "%d%d%d%d",CANWII_SOH,at_fun[id].at_cmdCode, MAC2STR(bssid),CANWII_EOH);
+    os_sprintf(temp, "%d%d%d%d\n",CANWII_SOH,at_fun[id].at_cmdCode, MAC2STR(bssid),CANWII_EOH);
   #endif // VERBOSE
 
   uart0_sendStr(temp);
@@ -688,7 +708,7 @@ at_queryCmdCipapmac(uint8_t id)
   #ifdef VERBOSE
     os_sprintf(temp,"%s:\""MACSTR"\" %s\n", at_fun[id].at_cmdName, MAC2STR(bssid));
   #else
-    os_sprintf(temp, "%d%d%d%d",CANWII_SOH,at_fun[id].at_cmdCode, MAC2STR(bssid),CANWII_EOH);
+    os_sprintf(temp, "%d%d%d%d\n",CANWII_SOH,at_fun[id].at_cmdCode, MAC2STR(bssid),CANWII_EOH);
   #endif // VERBOSE
 
   uart0_sendStr(temp);
@@ -736,7 +756,7 @@ at_queryCmdCipsta(uint8_t id)
   #ifdef VERBOSE
     os_sprintf(temp, "%s:\"%d.%d.%d.%d\"\n",at_fun[id].at_cmdName, IP2STR(&pTempIp.ip));
   #else
-    os_sprintf(temp, "%d%d%d.%d.%d.%d%d",CANWII_SOH,at_fun[id].at_cmdCode, IP2STR(&pTempIp.ip),CANWII_EOH);
+    os_sprintf(temp, "%d%d%d.%d.%d.%d%d\n",CANWII_SOH,at_fun[id].at_cmdCode, IP2STR(&pTempIp.ip),CANWII_EOH);
   #endif // VERBOSE
 
   uart0_sendStr(temp);
@@ -787,7 +807,7 @@ at_queryCmdCipap(uint8_t id)
   #ifdef VERBOSE
     os_sprintf(temp, "%s:\"%d.%d.%d.%d\"\n",at_fun[id].at_cmdName, IP2STR(&pTempIp.ip));
   #else
-    os_sprintf(temp, "%d%d%d.%d.%d.%d%d",CANWII_SOH,at_fun[id].at_cmdCode, IP2STR(&pTempIp.ip),CANWII_EOH);
+    os_sprintf(temp, "%d%d%d.%d.%d.%d%d\n",CANWII_SOH,at_fun[id].at_cmdCode, IP2STR(&pTempIp.ip),CANWII_EOH);
   #endif // VERBOSE
 
   uart0_sendStr(temp);

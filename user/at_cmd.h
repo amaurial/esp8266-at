@@ -22,6 +22,7 @@
 #include "at_wifiCmd.h"
 #include "at_ipCmd.h"
 #include "at_baseCmd.h"
+#include "at_merg.h"
 
 #define at_cmdNum   33
 
@@ -58,7 +59,7 @@ at_funcationType at_fun[at_cmdNum]={
   {"+CIUPDATE", 9,  CMD_CIUPDATE,       at_testCmdGeneric,  NULL,               NULL,                   at_exeCmdCiupdate},
   {"+CIPING",   7,  CMD_CIPING,         at_testCmdGeneric,  NULL,               NULL,                   at_exeCmdCiping},
   {"+CIPAPPUP", 9,  CMD_CIPAPPUP,       at_testCmdGeneric,  NULL,               NULL,                   at_exeCmdCipappup},
-  {"+MERG"    , 5,  CMD_MERG,           at_testCmdGeneric,  at_queryMerg,       NULL,                   at_exeMerg},
+  {"+MERG"    , 5,  CMD_MERG,           at_testCmdGeneric,  NULL,               at_setupMerg,           NULL},
   {"+AT",       3,  CMD_AT,             at_testCmdGeneric,  at_exeCmdNull,      NULL,                   at_exeCmdNull}
 #ifdef ali
   {"+MPINFO", 7, CMD_MPINFO,NULL, NULL, at_setupCmdMpinfo, NULL}

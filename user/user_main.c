@@ -27,9 +27,9 @@ void user_init(void)
 {
   uint8_t userbin;
   uint32_t upFlag;
-  at_uartType tempUart;
+  esp_StoreType tempUart;
 
-  user_esp_platform_load_param((uint32 *)&tempUart, sizeof(at_uartType));
+  user_esp_platform_load_param((uint32 *)&tempUart, sizeof(esp_StoreType));
   if(tempUart.saved == 1)
   {
     //uart_init(BIT_RATE_9600, BIT_RATE_9600);
@@ -41,6 +41,7 @@ void user_init(void)
     //uart_init(BIT_RATE_9600, BIT_RATE_9600);
   }
   at_wifiMode = wifi_get_opmode();
+  //TODO Change message
   os_printf("\nready!!!\n");
   uart0_sendStr("\nready\n");
   at_init();

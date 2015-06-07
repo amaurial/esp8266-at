@@ -18,9 +18,12 @@
 #ifndef __AT_WIFICMD_H
 #define __AT_WIFICMD_H
 
+#include "user_interface.h"
+
 void at_testCmdCwmode(uint8_t id);
 void at_queryCmdCwmode(uint8_t id);
 void at_setupCmdCwmode(uint8_t id, char *pPara);
+uint8_t at_setupCmdCwmodeEsp(uint8_t mode);
 
 //void at_testCmdCwjap(uint8_t id);
 void at_queryCmdCwjap(uint8_t id);
@@ -34,11 +37,13 @@ void at_exeCmdCwqap(uint8_t id);
 
 void at_queryCmdCwsap(uint8_t id);
 void at_setupCmdCwsap(uint8_t id, char *pPara);
+uint8_t at_setupCmdCwsapEsp(struct softap_config *apConfig,uint8_t passwdlen);
 
 void at_exeCmdCwlif(uint8_t id);
 
 void at_queryCmdCwdhcp(uint8_t id);
 void at_setupCmdCwdhcp(uint8_t id, char *pPara);
+uint8_t at_setupCmdCwdhcpEsp(uint8_t mode, uint8_t opt);
 
 void at_queryCmdCipstamac(uint8_t id);
 void at_setupCmdCipstamac(uint8_t id, char *pPara);
