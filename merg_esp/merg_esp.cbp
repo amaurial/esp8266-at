@@ -59,6 +59,10 @@
 		<Unit filename="../user/at_port.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../user/at_utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../user/at_utils.h" />
 		<Unit filename="../user/at_wifiCmd.c">
 			<Option compilerVar="CC" />
 		</Unit>

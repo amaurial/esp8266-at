@@ -7,8 +7,14 @@ setParamToEsp(char *param,uint8_t cmdid,esp_StoreType *espdata)
 {
     char *val;
     uint8_t len;
-    switch (cmdid){
-    case CMD_MERG:
+    #ifdef DEBUG
+        char tempStr[50];
+        os_sprintf(tempStr,"mergid:%d\n",cmdid);
+        uart0_sendStr(tempStr);
+    #endif // DEBUG
+
+    //switch (cmdid){
+    //case CMD_MERG:
         /*<SOH>
             <CMD_MERG><=>
                 <MERG_CMDID>
@@ -24,44 +30,62 @@ setParamToEsp(char *param,uint8_t cmdid,esp_StoreType *espdata)
         <EOH>
         */
         //param starts with "="
+
         val=param++;
-        espdata->cmdid=atoi(val);
+        espdata->cmdid=cmdid;
+        espdata->cmdsubid=*val;
         val=param++;
-        espdata->cwmode=atoi(val);
+        espdata->cwmode=*val-'0';
         val=param++;
-        espdata->dhcp_mode=atoi(val);
+        espdata->dhcp_mode=*val-'0';
         val=param++;
-        espdata->dhcp_enable=atoi(val);
-        val=param++;
+        espdata->dhcp_enable=*val-'0';
+        //param++;
         //get the ssid
         len=at_dataStrCpyWithDelim(espdata->ssid, param, 16,CANWII_STR_SEP);
         if (len==-1){
+            #ifdef DEBUG
+                uart0_sendStr("failed to get the sssid\n");
+            #endif // DEBUG
             return false;
         }
         espdata->ssidlen=len;
-        val=param++;
+        param+=(len+1);
         len=at_dataStrCpyWithDelim(espdata->passwd, param, 16,CANWII_STR_SEP);
         if (len==-1){
+            #ifdef DEBUG
+            uart0_sendStr("failed to get the password\n");
+            #endif // DEBUG
             return false;
         }
         espdata->passwdlen=len;
+        param+=(len+1);
         val=param++;
-        espdata->channel=atoi(val);
+        espdata->channel=*val-'0';
         val=param++;
-        espdata->wpa=atoi(val);
+        espdata->wpa=*val-'0';
         val=param++;
-        espdata->cwmux=atoi(val);
+        espdata->cwmux=*val-'0';
         val=param++;
-        espdata->server_mode=atoi(val);
+        espdata->server_mode=*val-'0';
         val=param++;
-        espdata->port=atoi(val);
+        espdata->port=*val;
         espdata->timeout=30;
         return true;
-    break;
-    }
-    return false;
+    //break;
+    //}
+    //#ifdef DEBUG
+    //        uart0_sendStr("invalid merg id\n");
+   // #endif // DEBUG
+    //return false;
 
 }
+
+void ICACHE_FLASH_ATTR
+logMessage(char *msg){
+    uart0_sendStr(msg);
+}
+
 
 /**
   * @brief  Copy param from receive data to dest. Start to copy until find the delimiter.
@@ -79,7 +103,7 @@ at_dataStrCpyWithDelim(void *pDest, const void *pSrc, int8_t maxLen,char delim)
   const char *pTempS = pSrc;
   int8_t len;
 
-  pTempS++;
+  //pTempS++;
   for(len=0; len<maxLen; len++)
   {
     if(*pTempS == delim)

@@ -24,6 +24,7 @@
 #include "user_interface.h"
 #include "at_version.h"
 #include "driver/uart_register.h"
+#include "spi_flash.h"
 
 /** @defgroup AT_BASECMD_Functions
   * @{
@@ -121,18 +122,10 @@ at_exeCmdUpdate(uint8_t id)
   uart0_sendStr(temp);
 
   spi_flash_read(60 * 4096, (uint32 *)&upFlag, sizeof(updateFlagType));
-//  os_printf("%X\n",upFlag.flag);
-//  os_printf("%X\n",upFlag.reserve[0]);
-//  os_printf("%X\n",upFlag.reserve[1]);
-//  os_printf("%X\n",upFlag.reserve[2]);
+
   upFlag.flag = 1;
   spi_flash_erase_sector(60);
   spi_flash_write(60 * 4096, (uint32 *)&upFlag, sizeof(updateFlagType));
-//  spi_flash_read(60 * 4096, (uint32 *)&upFlag, sizeof(updateFlagType));
-//  os_printf("%X\n",upFlag.flag);
-//  os_printf("%X\n",upFlag.reserve[0]);
-//  os_printf("%X\n",upFlag.reserve[1]);
-//  os_printf("%X\n",upFlag.reserve[2]);
   os_delay_us(10000);
   system_reboot_from(0x00);
 }
@@ -160,8 +153,10 @@ at_setupCmdMpinfo(uint8_t id, char *pPara)
 #endif
 
 
-#define ESP_PARAM_START_SEC   0x3C
-
+//#define ESP_PARAM_START_SEC   0x3C
+#define ESP_PARAM_START_SEC   0x3D
+#define ESP_MEM_POS1 0xff00
+#define ESP_MEM_POS2 0xff00
 #define ESP_PARAM_SAVE_0    1
 #define ESP_PARAM_SAVE_1    2
 #define ESP_PARAM_FLAG      3
@@ -180,16 +175,39 @@ void ICACHE_FLASH_ATTR
 user_esp_platform_load_param(void *param, uint16 len)
 {
     struct esp_platform_sec_flag_param flag;
+    SpiFlashOpResult ret;
 
-    spi_flash_read((ESP_PARAM_START_SEC + ESP_PARAM_FLAG) * SPI_FLASH_SEC_SIZE,
-                   (uint32 *)&flag, sizeof(struct esp_platform_sec_flag_param));
+    //ret=spi_flash_read((ESP_PARAM_START_SEC + ESP_PARAM_FLAG) * SPI_FLASH_SEC_SIZE,
+    //               (uint32 *)&flag, sizeof(struct esp_platform_sec_flag_param));
+    ret=spi_flash_read(ESP_MEM_POS1,(uint32 *)&flag, sizeof(struct esp_platform_sec_flag_param));
 
+    if (ret!=SPI_FLASH_RESULT_OK){
+        #ifdef DEBUG
+            uart0_sendStr("ERROR READING param.\n");
+        #endif // DEBUG
+        }
     if (flag.flag == 0) {
-        spi_flash_read((ESP_PARAM_START_SEC + ESP_PARAM_SAVE_0) * SPI_FLASH_SEC_SIZE,
-                       (uint32 *)param, len);
+        #ifdef DEBUG
+            uart0_sendStr("reading on sector 0\n");
+        #endif // DEBUG
+        //ret=spi_flash_read((ESP_PARAM_START_SEC + ESP_PARAM_SAVE_0) * SPI_FLASH_SEC_SIZE,(uint32 *)param, len);
+        ret=spi_flash_read(ESP_MEM_POS1+sizeof(struct esp_platform_sec_flag_param),(uint32 *)param, len);
+        if (ret!=SPI_FLASH_RESULT_OK){
+            #ifdef DEBUG
+            uart0_sendStr("ERROR READING config.\n");
+        #endif // DEBUG
+        }
     } else {
-        spi_flash_read((ESP_PARAM_START_SEC + ESP_PARAM_SAVE_1) * SPI_FLASH_SEC_SIZE,
-                       (uint32 *)param, len);
+        #ifdef DEBUG
+            uart0_sendStr("reading on sector 1\n");
+        #endif // DEBUG
+        //ret=spi_flash_read((ESP_PARAM_START_SEC + ESP_PARAM_SAVE_1) * SPI_FLASH_SEC_SIZE,(uint32 *)param, len);
+        ret=spi_flash_read(ESP_MEM_POS2+sizeof(struct esp_platform_sec_flag_param),(uint32 *)param, len);
+        if (ret!=SPI_FLASH_RESULT_OK){
+            #ifdef DEBUG
+            uart0_sendStr("ERROR READING config.\n");
+        #endif // DEBUG
+        }
     }
 }
 
@@ -204,26 +222,63 @@ void ICACHE_FLASH_ATTR
 user_esp_platform_save_param(void *param, uint16 len)
 {
     struct esp_platform_sec_flag_param flag;
+    SpiFlashOpResult ret;
 
-    spi_flash_read((ESP_PARAM_START_SEC + ESP_PARAM_FLAG) * SPI_FLASH_SEC_SIZE,
-                       (uint32 *)&flag, sizeof(struct esp_platform_sec_flag_param));
+    //spi_flash_read((ESP_PARAM_START_SEC + ESP_PARAM_FLAG) * SPI_FLASH_SEC_SIZE,
+    //                   (uint32 *)&flag, sizeof(struct esp_platform_sec_flag_param));
+    ret=spi_flash_read(ESP_MEM_POS1,(uint32 *)&flag, sizeof(struct esp_platform_sec_flag_param));
 
     if (flag.flag == 0) {
-        spi_flash_erase_sector(ESP_PARAM_START_SEC + ESP_PARAM_SAVE_1);
-        spi_flash_write((ESP_PARAM_START_SEC + ESP_PARAM_SAVE_1) * SPI_FLASH_SEC_SIZE,
-                        (uint32 *)param, len);
+        #ifdef DEBUG
+            uart0_sendStr("saving on sector 0\n");
+        #endif // DEBUG
+        //spi_flash_erase_sector(ESP_PARAM_START_SEC + ESP_PARAM_SAVE_1);
+        //ret=spi_flash_write((ESP_PARAM_START_SEC + ESP_PARAM_SAVE_1) * SPI_FLASH_SEC_SIZE,
+        //                (uint32 *)param, len);
+
+        spi_flash_erase_sector(ESP_MEM_POS2);
+        ret=spi_flash_write(ESP_MEM_POS2+sizeof(struct esp_platform_sec_flag_param),(uint32 *)param, len);
+        if (ret!=SPI_FLASH_RESULT_OK){
+            #ifdef DEBUG
+            uart0_sendStr("ERROR WRITING config.\n");
+        #endif // DEBUG
+        }
         flag.flag = 1;
-        spi_flash_erase_sector(ESP_PARAM_START_SEC + ESP_PARAM_FLAG);
-        spi_flash_write((ESP_PARAM_START_SEC + ESP_PARAM_FLAG) * SPI_FLASH_SEC_SIZE,
-                        (uint32 *)&flag, sizeof(struct esp_platform_sec_flag_param));
+        //spi_flash_erase_sector(ESP_PARAM_START_SEC + ESP_PARAM_FLAG);
+        //ret=spi_flash_write((ESP_PARAM_START_SEC + ESP_PARAM_FLAG) * SPI_FLASH_SEC_SIZE,
+        //                (uint32 *)&flag, sizeof(struct esp_platform_sec_flag_param));
+        spi_flash_erase_sector(ESP_MEM_POS1);
+        ret=spi_flash_write(ESP_MEM_POS1,(uint32 *)&flag, sizeof(struct esp_platform_sec_flag_param));
+        if (ret!=SPI_FLASH_RESULT_OK){
+            #ifdef DEBUG
+            uart0_sendStr("ERROR WRITING param.\n");
+            #endif // DEBUG
+        }
     } else {
-        spi_flash_erase_sector(ESP_PARAM_START_SEC + ESP_PARAM_SAVE_0);
-        spi_flash_write((ESP_PARAM_START_SEC + ESP_PARAM_SAVE_0) * SPI_FLASH_SEC_SIZE,
-                        (uint32 *)param, len);
+        #ifdef DEBUG
+            uart0_sendStr("saving on sector 1\n");
+        #endif // DEBUG
+        //spi_flash_erase_sector(ESP_PARAM_START_SEC + ESP_PARAM_SAVE_0);
+        //ret=spi_flash_write((ESP_PARAM_START_SEC + ESP_PARAM_SAVE_0) * SPI_FLASH_SEC_SIZE,
+        //                (uint32 *)param, len);
+        spi_flash_erase_sector(ESP_MEM_POS1);
+        ret=spi_flash_write(ESP_MEM_POS1+sizeof(struct esp_platform_sec_flag_param),(uint32 *)param, len);
+        if (ret!=SPI_FLASH_RESULT_OK){
+            #ifdef DEBUG
+            uart0_sendStr("ERROR WRITING config.\n");
+        #endif // DEBUG
+        }
         flag.flag = 0;
-        spi_flash_erase_sector(ESP_PARAM_START_SEC + ESP_PARAM_FLAG);
-        spi_flash_write((ESP_PARAM_START_SEC + ESP_PARAM_FLAG) * SPI_FLASH_SEC_SIZE,
-                        (uint32 *)&flag, sizeof(struct esp_platform_sec_flag_param));
+        //spi_flash_erase_sector(ESP_PARAM_START_SEC + ESP_PARAM_FLAG);
+        //ret=spi_flash_write((ESP_PARAM_START_SEC + ESP_PARAM_FLAG) * SPI_FLASH_SEC_SIZE,
+        //                (uint32 *)&flag, sizeof(struct esp_platform_sec_flag_param));
+        spi_flash_erase_sector(ESP_MEM_POS1);
+        ret=spi_flash_write(ESP_MEM_POS1,(uint32 *)&flag, sizeof(struct esp_platform_sec_flag_param));
+        if (ret!=SPI_FLASH_RESULT_OK){
+            #ifdef DEBUG
+            uart0_sendStr("ERROR WRITING param.\n");
+        #endif // DEBUG
+        }
     }
 }
 

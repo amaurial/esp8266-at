@@ -11,6 +11,6 @@ uint8_t at_dataStrCpyWithDelim(void *pDest, const void *pSrc, int8_t maxLen,char
 bool setParamToEsp(char *param,uint8_t cmdid,esp_StoreType *espdata);
 struct_MSGType generalMSG;
 void sendGeneralMsg(struct_MSGType msgtype);
-
+void logMessage(char *msg);
 
 #endif

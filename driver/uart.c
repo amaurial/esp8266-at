@@ -20,7 +20,6 @@
 #include "driver/uart.h"
 #include "osapi.h"
 #include "driver/uart_register.h"
-//#include "ssc.h"
 #include "at.h"
 
 // UartDev is defined and initialized in rom code.
@@ -245,5 +244,5 @@ void ICACHE_FLASH_ATTR
 uart_reattach()
 {
 	//uart_init(BIT_RATE_74880, BIT_RATE_74880);
-	uart_init(BIT_RATE_115200, BIT_RATE_115200);
+	uart_init(BIT_RATE_115200, BIT_RATE_9600);
 }

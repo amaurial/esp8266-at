@@ -125,7 +125,6 @@ at_setupCmdCwmodeEsp(uint8_t mode)
 {
   if(mode == at_wifiMode)
   {
-    at_backOk;
     return 0;
   }
   if((mode >= 1) && (mode <= 3))
@@ -528,9 +527,9 @@ at_setupCmdCwsapEsp(struct softap_config *apConfig,uint8_t passwdlen)
     {
         return 1;
     }
-    ETS_UART_INTR_DISABLE();
+    //ETS_UART_INTR_DISABLE();
     ret=wifi_softap_set_config(apConfig);
-    ETS_UART_INTR_ENABLE();
+    //ETS_UART_INTR_ENABLE();
     return ((ret==true)?0:1);
 
 }

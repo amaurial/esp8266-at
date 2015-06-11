@@ -176,15 +176,24 @@ at_cmdProcess(uint8_t *pAtRcvData)
 
       if(at_fun[cmdId].at_setupCmd)
       {
+        #ifdef DEBUG
+            uart0_sendStr("calling set function\n");
+        #endif // DEBUG
         at_fun[cmdId].at_setupCmd(cmdId, pAtRcvData);
       }
       else
       {
+        #ifdef DEBUG
+            uart0_sendStr("function not registered\n");
+        #endif // DEBUG
         at_backError;
       }
     }
     else
     {
+      #ifdef DEBUG
+        uart0_sendStr("invalid format\n");
+      #endif // DEBUG
       at_backError;
     }
   }

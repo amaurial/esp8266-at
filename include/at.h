@@ -25,7 +25,7 @@
 #define at_recvTaskQueueLen    64
 
 #define CMD_BUFFER_SIZE 128
-//#define DEBUG 1
+#define DEBUG 1
 #define VERBOSE 1
 
 
@@ -144,6 +144,7 @@ typedef struct
   uint8_t server_mode;//0=server,1=client
   uint8_t cmdid;
   uint8_t cmdsubid;
+  uint8_t state;
 }esp_StoreType;
 
 #define NULLPARAM 255

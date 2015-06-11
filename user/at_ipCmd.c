@@ -1791,6 +1791,15 @@ at_setupCmdCipserverEsp(uint8_t mode, int32_t port)
   {
     return 1;
   }
+
+  if (mode>1 || mode <0){
+    return 1;
+  }
+
+  if (port>0xff){
+    return 1;
+  }
+
   if(mode == 0 && tport<=0)
   {
     return 1;
@@ -1798,7 +1807,7 @@ at_setupCmdCipserverEsp(uint8_t mode, int32_t port)
   else if(mode == 1)
   {
     if(tport<=0){
-      tport = 333;
+      tport = 30;
     }
   }
   else
@@ -1957,7 +1966,7 @@ at_queryCmdCipsto(uint8_t id)
 void ICACHE_FLASH_ATTR
 at_setupCmdCipsto(uint8_t id, char *pPara)
 {
-  char temp[64];
+
   uint16_t timeOver;
 
   if(serverEn == FALSE)
@@ -1980,6 +1989,7 @@ at_setupCmdCipsto(uint8_t id, char *pPara)
   at_backOk;
   return;
 }
+#define KEY "39cdfe29a1863489e788efc339f514d78b78f0de"
 
 #define ESP_PARAM_SAVE_SEC_0    1
 #define ESP_PARAM_SAVE_SEC_1    2
@@ -2001,27 +2011,21 @@ Authorization: token %s\n\
 Accept-Encoding: gzip,deflate,sdch\n\
 Accept-Language: zh-CN,zh;q=0.8\n\n"
 
-#define test
-#ifdef test
-#define KEY "39cdfe29a1863489e788efc339f514d78b78f0de"
-#else
-#define KEY "4ec90c1abbd5ffc0b339f34560a2eb8d71733861"
-#endif
 
 //TODO:add other params
 struct espconn *pespconn;
 struct upgrade_server_info *upServer = NULL;
-struct esp_platform_saved_param {
-    uint8 devkey[40];
-    uint8 token[40];
-    uint8 activeflag;
-    uint8 pad[3];
-};
+//struct esp_platform_saved_param {
+//    uint8 devkey[40];
+//    uint8 token[40];
+//    uint8 activeflag;
+//    uint8 pad[3];
+//};
 struct esp_platform_sec_flag_param {
     uint8 flag;
     uint8 pad[3];
 };
-//static struct esp_platform_saved_param esp_param;
+
 
 /******************************************************************************
  * FunctionName : user_esp_platform_upgrade_cb
@@ -2052,30 +2056,9 @@ at_upDate_rsp(void *arg)
   os_free(server);
   server = NULL;
 
-//  espconn_disconnect(pespconn);
   specialAtState = TRUE;
   at_state = at_statIdle;
 }
-
-///******************************************************************************
-// * FunctionName : user_esp_platform_load_param
-// * Description  : load parameter from flash, toggle use two sector by flag value.
-// * Parameters   : param--the parame point which write the flash
-// * Returns      : none
-//*******************************************************************************/
-//void ICACHE_FLASH_ATTR
-//user_esp_platform_load_param(struct esp_platform_saved_param *param)
-//{
-//    struct esp_platform_sec_flag_param flag;
-//
-//    load_user_param(ESP_PARAM_SEC_FLAG, 0, &flag, sizeof(struct esp_platform_sec_flag_param));
-//
-//    if (flag.flag == 0) {
-//        load_user_param(ESP_PARAM_SAVE_SEC_0, 0, param, sizeof(struct esp_platform_saved_param));
-//    } else {
-//        load_user_param(ESP_PARAM_SAVE_SEC_1, 0, param, sizeof(struct esp_platform_saved_param));
-//    }
-//}
 
 /**
   * @brief  Tcp client disconnect success callback function.
@@ -2285,7 +2268,6 @@ LOCAL void ICACHE_FLASH_ATTR
 upServer_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
 {
   struct espconn *pespconn = (struct espconn *) arg;
-//  char temp[32];
 
   if(ipaddr == NULL)
   {
