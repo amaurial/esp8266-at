@@ -233,8 +233,8 @@ sendGeneralMsg(struct_MSGType msgtype)
             break;
         }
     #else
-        char temp[5];
-        os_sprintf(temp,"%d%d%d%d\n",CANWII_SOH
+        //char temp[5];
+        os_sprintf(temp,"%d%d%d%d%d\n",CANWII_SOH,
              CANWII_ERR,
              msgtype.msgid,
              msgtype.param0,

@@ -25,8 +25,8 @@
 #define at_recvTaskQueueLen    64
 
 #define CMD_BUFFER_SIZE 128
-#define DEBUG 1
-#define VERBOSE 1
+//#define DEBUG 0
+//#define VERBOSE 0
 
 
 #define at_procTaskPrio        1
@@ -36,8 +36,8 @@
     #define at_backError     uart0_sendStr("\nERROR\n")
     #define at_backTeError   "+CTE ERROR: %d\n"
 #else
-    #define at_backOk        uart0_sendStr(CANWII_OK)
-    #define at_backError     uart0_sendStr(CANWII_ERR)
+    #define at_backOk        uart_tx_one_char(CANWII_OK)
+    #define at_backError     uart_tx_one_char(CANWII_ERR)
     #define at_backTeError   "%d" + CANWII_TE_ERR
 #endif // VERBOSE
 

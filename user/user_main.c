@@ -29,7 +29,9 @@ void user_init(void)
   esp_StoreType tempUart;
 
   uart_init(BIT_RATE_115200, BIT_RATE_9600);
-  uart0_sendStr("INIT\n");
+  #ifdef DEBUG
+    uart0_sendStr("INIT\n");
+  #endif // DEBUG
   user_esp_platform_load_param((uint32 *)&tempUart, sizeof(esp_StoreType));
   at_wifiMode = wifi_get_opmode();
 
@@ -57,7 +59,9 @@ void user_init(void)
     #endif // DEBUG
   //create the server
   if (tempUart.state==1){
-    uart0_sendStr("STARTING SAVED STATE\n");
+    #ifdef DEBUG
+        uart0_sendStr("STARTING SAVED STATE\n");
+    #endif //DEBUG
     //at_setupCmdCwmodeEsp(tempUart.cwmode);
    // at_setupCmdCwdhcpEsp(tempUart.dhcp_mode,tempUart.dhcp_enable);
 
@@ -65,11 +69,17 @@ void user_init(void)
     tempUart.state==1;
     tempUart.saved==0;
     //user_esp_platform_save_param((uint32 *)&tempUart, sizeof(esp_StoreType));
-
+    at_backOk;
+  }
+  else{
+    at_backError;
   }
 
   //TODO Change message
-  os_printf("ready!!!\n");
-  uart0_sendStr("ready\n");
+    #ifdef DEBUG
+        os_printf("ready!!!\n");
+        uart0_sendStr("ready\n");
+    #endif //DEBUG
+
   at_init();
 }

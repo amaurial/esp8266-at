@@ -442,7 +442,7 @@ at_queryCmdCwsap(uint8_t id)
              apConfig.channel,
              apConfig.authmode);
   #else
-    os_sprintf(temp,"%d%d%d,%d,%d,%d%d\n",CANWII_SOH
+    os_sprintf(temp,"%d%d%d,%d,%d,%d%d\n",CANWII_SOH,
              at_fun[id].at_cmdCode,
              apConfig.ssid,
              apConfig.password,

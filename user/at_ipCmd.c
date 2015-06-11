@@ -15,12 +15,12 @@
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "at.h"
 #include "c_types.h"
 #include "user_interface.h"
 #include "at_version.h"
 #include "espconn.h"
 #include "mem.h"
-#include "at.h"
 #include "at_ipCmd.h"
 #include "osapi.h"
 #include "driver/uart.h"
@@ -86,7 +86,7 @@ at_setupCmdCifsr(uint8_t id, char *pPara)
 {
   struct ip_info pTempIp;
   int8_t len;
-  char ipTemp[64];
+  char temp[64];
 //  char temp[64];
 
   if(at_wifiMode == STATION_MODE)
@@ -95,7 +95,7 @@ at_setupCmdCifsr(uint8_t id, char *pPara)
     return;
   }
   pPara = strchr(pPara, '\"');
-  len = at_dataStrCpy(ipTemp, pPara, 32);
+  len = at_dataStrCpy(temp, pPara, 32);
   if(len == -1)
   {
 
@@ -104,13 +104,13 @@ at_setupCmdCifsr(uint8_t id, char *pPara)
     #else
         os_sprintf(temp, "%d%d%d\n",CANWII_SOH, RSP_IP_ERROR,CANWII_EOH);
     #endif // VERBOSE
-
+    uart0_sendStr(temp);
 
     return;
   }
 
   wifi_get_ip_info(0x01, &pTempIp);
-  pTempIp.ip.addr = ipaddr_addr(ipTemp);
+  pTempIp.ip.addr = ipaddr_addr(temp);
 
   os_printf("%d.%d.%d.%d\n",
                  IP2STR(&pTempIp.ip));
@@ -424,30 +424,6 @@ at_tcpclient_sent_cb(void *arg)
   sendGeneralMsg(generalMSG);
   //uart0_sendStr("\nSEND OK\n");
 }
-
-///**
-//  * @brief  Send over callback function.
-//  * @param  arg: contain the ip link information
-//  * @retval None
-//  */
-//static void ICACHE_FLASH_ATTR
-//at_udp_sent_cb(void *arg)
-//{
-////  os_free(at_dataLine);
-////  os_printf("send_cb\r\n");
-//  if(IPMODE == TRUE)
-//  {
-//    ipDataSendFlag = 0;
-//    os_timer_disarm(&at_delayCheck);
-//    os_timer_arm(&at_delayCheck, 20, 0);
-//    system_os_post(at_recvTaskPrio, 0, 0); ////
-//    ETS_UART_INTR_ENABLE();
-//    return;
-//  }
-//  uart0_sendStr("\r\nSEND OK\r\n");
-//  specialAtState = TRUE;
-//  at_state = at_statIdle;
-//}
 
 /**
   * @brief  Tcp client connect success callback function.
