@@ -1,0 +1,135 @@
+CANWiiProtocol for module CANWii
+
+Background
+
+The purpose of this document is to explain how the interaction between the PIC and the ESP8266 works.
+Originally the ESP8266 offers a verbose serial communication protocol based on AT commands. This protocol is not suitable for
+communication among embbebed devices. In order to decrease the number of bytes used to send a command and receive a response from the ESP,
+we developed the protocol explained in this document.
+
+Glossary of terms
+SOM=Start of Message
+EOM=End of Message
+
+
+Basic functionality
+
+The communication is done by serial port at the baud rate of 115200 bits per second. The ESP uart is configured to this rate.
+Once the serial link is stablished the communication is done by using the following format:
+
+<start of message><message code><action><parameters ... ><end of message>
+
+The response follows the same, but the ESP will return either an OK message or an ERROR message at the end.
+Those are a one byte message.
+Before receiving the OK or ERROR other general messages can be sent. These messages contain status but are normally 
+considered failures.
+These message are in the format:
+<start of message><error indication><error id><parameter><end of message>
+
+[OBS: I think this has to be inproved to a standard error format message.]
+
+To allow the proper identification of the messages the values between 0x00 and 0x0A are reserved. It means that when an integer between 0 an 9
+need to be transmitted it should be send as a char in the ascii table: 0x30 to 0x39.
+
+
+Messages and parameters
+
+MERG Message
+Code:0x29
+Format:<SOM><0x29><=><CMDID><CWMODE><DHCP_MODE><DHCP_ENABLED><SSID><,><PASSWORD>,<CHANNEL><WPA_MODE><MULTIPLE_CONNECTIONS><CREATE_TCP><PORT><EOM>
+[OBS: CREATE_TCP, WPA_MODE, MULTIPLE_CONNECTIONS, DHCP_MODE and DHCP_ENABLED should be a internal default for this command]
+Parameters:
+CMDID=Command ID. At this moment it has just one command. Can be skipped in future version.
+CWMODE=Choose which mode the ESP should be.
+DHCP_MODE
+DHCP_ENABLED
+SSID=Name of the AP that will be announced. Max of 16 bytes (can be changed to max of 64 bytes).
+PASSWORD=Password of the AP. Max of 16 bytes (can be changed to max of 64 bytes).
+CHANNEL=Values of 0 to 9. These should be
+WPA_MODE=indicates the security level of AP access. Values 0=no password needed,1=password needed,2=encrypted password,3= ...
+MULTIPLE_CONNECTIONS=indicate the esp to support multiple connections. [OBS:this value also could be default to multiple connections.]
+CREATE_TCP=
+PORT=tcp port. Value between 10 and 255. These values should be enough for canwii. If not we can add another byte to expand the port values.
+
+
+CMD_AT 0x0a
+CMD_RST 0x0b
+CMD_GMR 0x0c
+CMD_GSLP 0x0d
+CMD_IPR 0x0e
+CMD_CWMODE 0x0f
+CMD_CWJAP 0x10
+CMD_CWLAP 0x11
+CMD_CWQAP 0x12
+CMD_CWSAP 0x13
+CMD_CWLIF 0x14
+CMD_CWDHCP 0x15
+CMD_CIFSR 0x16
+CMD_CIPSTAMAC 0x17
+CMD_CIPAPMAC 0x18
+CMD_CIPSTA 0x19
+CMD_CIPAP 0x1a
+CMD_CIPSTATUS 0x1b
+CMD_CIPSTART 0x1c
+CMD_CIPCLOSE 0x1d
+CMD_CIPSEND 0x1e
+CMD_CIPMUX 0x1f
+CMD_CIPSERVER 0x20
+CMD_CIPMODE 0x21
+CMD_CIPSTO 0x22
+CMD_CIUPDATE 0x23
+CMD_CIPING 0x24
+CMD_CIPAPPUP 0x25
+CMD_ATE 0x26
+CMD_MPINFO 0x27
+CMD_IPD 0x28
+CMD_MERG 0x29
+
+CMD_QUERY '?'
+CMD_EQUAL '='
+
+RSP_CONNECTED 0xA1
+RSP_DISCONNECTED 0xA2
+RSP_OK 0xA3
+RSP_TCP_ERROR 0xA4
+RSP_IP_ERROR 0xA5
+RSP_NOAP 0xA6
+RSP_FAIL_CONNECT 0xA7
+RSP_MISS_PARAM_ERROR 0xA8
+RSP_CLOSED 0xA9
+RSP_SENT 0xAA
+RSP_DNS_FAIL 0xAB
+RSP_NOID_ERROR 0xAC
+RSP_LINK_TYPE_ERROR 0xAD
+RSP_BUSY_PROCESSING 0xAE
+RSP_BUSY_SENDING 0xAF
+
+CANWII_SOH 0x01
+CANWII_EOH 0x04
+CANWII_STR_SEP ','
+CANWII_VERSION 0x01
+CANWII_ON 0x01
+CANWII_OFF 0x00
+CANWII_OK 0x02
+CANWII_ERR 0x03
+CANWII_TE_ERR
+CANWII_TCP 1
+CANWII_UDP 0
+//Merg OPCS
+//after this value the esp expect:
+//ssid,ssid_passwd,cwmode,cwmux,port,timeout
+CANWII_CONFIGESP 0x01
+CANWII_START_TCP_SESSION 0x02
+CANWII_END_TCP_SESSION 0x03
+CANWII_START_UDP_SESSION 0x02
+CANWII_END_UDP_SESSION 0x03
+CANWII_KEEP_ALIVE 0x04
+CANWII_DATA_FROM_ESP 0x05
+CANWII_DATA_TO_ESP 0x06
+CANWII_END_OF_SESSION 0x07
+CANWII_SET_BAUD_RATE 0x08
+CANWII_SET_DHCP 0x09
+
+//Error codes
+CANWII_ERR_FAIL_CONFIG
+CANWII_ERR_BUSY
