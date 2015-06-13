@@ -14,7 +14,7 @@ setParamToEsp(char *param,uint8_t cmdid,esp_StoreType *espdata)
     #endif // DEBUG
 
     switch (cmdid){
-    case CMD_MERG_CONFIG_AP_EXTENDED:
+    case CMD_MERG_CONFIG_AP_EXT:
         /*<SOH>
             <CMD_MERG_CONFIG_AP_EXTENDED><=>
                 <CWMODE>

@@ -151,8 +151,8 @@ at_cmdProcess(uint8_t *pAtRcvData)
         at_backError;
       }
     }
-    //test function. include '=?<EOH>'
-    else if((*pAtRcvData == CMD_EQUAL) && (pAtRcvData[1] == CMD_QUERY) && (pAtRcvData[2] == CANWII_EOH))
+    //test function. include '!<EOH>'
+    else if((*pAtRcvData == CMD_TEST)  && (pAtRcvData[2] == CANWII_EOH))
     {
 
       #ifdef DEBUG

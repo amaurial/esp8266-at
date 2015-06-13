@@ -25,8 +25,8 @@
 #define at_recvTaskQueueLen    64
 
 #define CMD_BUFFER_SIZE 128
-#define DEBUG 0
-#define VERBOSE 0
+//#define DEBUG
+//#define VERBOSE
 
 
 #define at_procTaskPrio        1
@@ -72,11 +72,12 @@
 #define CMD_ATE 0x26
 #define CMD_MPINFO 0x27
 #define CMD_IPD 0x28
-#define CMD_MERG_CONFIG_AP_EXTENDED 0x29
+#define CMD_MERG_CONFIG_AP_EXT 0x29
 #define CMD_MERG_CONFIG_AP 0x30
 
 #define CMD_QUERY '?'
 #define CMD_EQUAL '='
+#define CMD_TEST '!'
 
 #define RSP_CONNECTED 0xA1
 #define RSP_DISCONNECTED 0xA2
