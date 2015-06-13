@@ -25,8 +25,8 @@
 #define at_recvTaskQueueLen    64
 
 #define CMD_BUFFER_SIZE 128
-//#define DEBUG 0
-//#define VERBOSE 0
+#define DEBUG 0
+#define VERBOSE 0
 
 
 #define at_procTaskPrio        1
@@ -72,7 +72,8 @@
 #define CMD_ATE 0x26
 #define CMD_MPINFO 0x27
 #define CMD_IPD 0x28
-#define CMD_MERG 0x29
+#define CMD_MERG_CONFIG_AP_EXTENDED 0x29
+#define CMD_MERG_CONFIG_AP 0x30
 
 #define CMD_QUERY '?'
 #define CMD_EQUAL '='
@@ -93,6 +94,8 @@
 #define RSP_BUSY_PROCESSING 0xAE
 #define RSP_BUSY_SENDING 0xAF
 
+
+#define TCP_SERVER_TIMEOUT 120//seconds
 
 
 typedef enum{

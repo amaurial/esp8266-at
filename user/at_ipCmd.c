@@ -1796,7 +1796,7 @@ at_setupCmdCipserverEsp(uint8_t mode, int32_t port)
     generalMSG.msgid=MSG_NO_CHANGE;
     generalMSG.param0=NULLPARAM;
     sendGeneralMsg(generalMSG);
-    return;
+    return 0;
   }
 
   if(mode==1)
@@ -1807,7 +1807,7 @@ at_setupCmdCipserverEsp(uint8_t mode, int32_t port)
       generalMSG.msgid=MSG_TCP_SERVER_FAIL;
       generalMSG.param0=NULLPARAM;
       sendGeneralMsg(generalMSG);
-      return;
+      return 1;
     }
     pTcpServer->type = ESPCONN_TCP;
     pTcpServer->state = ESPCONN_NONE;
@@ -1817,44 +1817,6 @@ at_setupCmdCipserverEsp(uint8_t mode, int32_t port)
     espconn_accept(pTcpServer);
     espconn_regist_time(pTcpServer, server_timeover, 0);
 
-//    pUdpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
-//    if (pUdpServer == NULL)
-//    {
-//      uart0_sendStr("UdpServer Failure\r\n");
-//      return;
-//    }
-//    pUdpServer->type = ESPCONN_UDP;
-//    pUdpServer->state = ESPCONN_NONE;
-//    pUdpServer->proto.udp = (esp_udp *)os_zalloc(sizeof(esp_udp));
-//    pUdpServer->proto.udp->local_port = port;
-//    pUdpServer->reverse = NULL;
-//    espconn_regist_recvcb(pUdpServer, at_udpserver_recv);
-//    espconn_create(pUdpServer);
-
-//    if(pLink[0].linkEn)
-//    {
-//      uart0_sendStr("Link is builded\r\n");
-//      return;
-//    }
-//    pLink[0].pCon = (struct espconn *)os_zalloc(sizeof(struct espconn));
-//    if (pLink[0].pCon == NULL)
-//    {
-//      uart0_sendStr("Link buile Failure\r\n");
-//      return;
-//    }
-//    pLink[0].pCon->type = ESPCONN_TCP;
-//    pLink[0].pCon->state = ESPCONN_NONE;
-//    pLink[0].linkId = 0;
-//    pLink[0].linkEn = TRUE;
-//
-//    pLink[0].pCon->proto.tcp = (esp_tcp *)os_zalloc(sizeof(esp_tcp));
-//    pLink[0].pCon->proto.tcp->local_port = port;
-//
-//    pLink[0].pCon->reverse = &pLink[0];
-//
-//    espconn_regist_connectcb(pLink[0].pCon, user_test_tcpserver_listen);
-//    espconn_accept(pLink[0].pCon);
-//    at_linkNum++;
   }
   else
   {

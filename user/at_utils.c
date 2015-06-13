@@ -13,11 +13,10 @@ setParamToEsp(char *param,uint8_t cmdid,esp_StoreType *espdata)
         uart0_sendStr(tempStr);
     #endif // DEBUG
 
-    //switch (cmdid){
-    //case CMD_MERG:
+    switch (cmdid){
+    case CMD_MERG_CONFIG_AP_EXTENDED:
         /*<SOH>
-            <CMD_MERG><=>
-                <MERG_CMDID>
+            <CMD_MERG_CONFIG_AP_EXTENDED><=>
                 <CWMODE>
                 <CWDHCP_P1>
                 <CWDHCP_P2>
@@ -25,15 +24,14 @@ setParamToEsp(char *param,uint8_t cmdid,esp_StoreType *espdata)
                 <CWSAP_p3> channel
                 <CWSAP_p4> wpa type
                 <CIPMUX>
-                <CIPSERVER_p1>
-                <CIPSERVER_p2>
+                <CREATESERVER>
+                <PORT>
         <EOH>
         */
         //param starts with "="
 
-        val=param++;
         espdata->cmdid=cmdid;
-        espdata->cmdsubid=*val;
+        espdata->cmdsubid=0;
         val=param++;
         espdata->cwmode=*val-'0';
         val=param++;
@@ -70,14 +68,61 @@ setParamToEsp(char *param,uint8_t cmdid,esp_StoreType *espdata)
         espdata->server_mode=*val-'0';
         val=param++;
         espdata->port=*val;
-        espdata->timeout=30;
+        espdata->timeout=TCP_SERVER_TIMEOUT;
         return true;
-    //break;
-    //}
-    //#ifdef DEBUG
-    //        uart0_sendStr("invalid merg id\n");
-   // #endif // DEBUG
-    //return false;
+    break;
+    case CMD_MERG_CONFIG_AP:
+        /*<SOH>
+            <CMD_MERG_CONFIG_APT><=>
+                <ssid>,<passwd>,
+                <CWSAP_p3> channel
+                <CWSAP_p4> wpa type
+                <PORT>
+        <EOH>
+        */
+        //param starts with "="
+
+        espdata->cmdid=cmdid;
+        espdata->cmdsubid=0;
+        espdata->cwmode=3;
+        espdata->dhcp_mode=2;
+        espdata->dhcp_enable=0;
+        espdata->cwmux=1;
+        espdata->server_mode=1;
+        espdata->timeout=TCP_SERVER_TIMEOUT;
+        //param++;
+        //get the ssid
+        len=at_dataStrCpyWithDelim(espdata->ssid, param, 16,CANWII_STR_SEP);
+        if (len==-1){
+            #ifdef DEBUG
+                uart0_sendStr("failed to get the sssid\n");
+            #endif // DEBUG
+            return false;
+        }
+        espdata->ssidlen=len;
+        param+=(len+1);
+        len=at_dataStrCpyWithDelim(espdata->passwd, param, 16,CANWII_STR_SEP);
+        if (len==-1){
+            #ifdef DEBUG
+            uart0_sendStr("failed to get the password\n");
+            #endif // DEBUG
+            return false;
+        }
+        espdata->passwdlen=len;
+        param+=(len+1);
+        val=param++;
+        espdata->channel=*val-'0';
+        val=param++;
+        espdata->wpa=*val-'0';
+        val=param++;
+        espdata->port=*val;
+        return true;
+    break;
+    }
+    #ifdef DEBUG
+           uart0_sendStr("invalid merg id\n");
+   #endif // DEBUG
+    return false;
 
 }
 

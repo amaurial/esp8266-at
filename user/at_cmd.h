@@ -24,7 +24,7 @@
 #include "at_baseCmd.h"
 #include "at_merg.h"
 
-#define at_cmdNum   33
+#define at_cmdNum   34
 
 at_funcationType at_fun[at_cmdNum]={
   {NULL,    0,      0x00,               NULL,               NULL, NULL,           at_exeCmdNull},
@@ -59,7 +59,8 @@ at_funcationType at_fun[at_cmdNum]={
   {"+CIUPDATE", 9,  CMD_CIUPDATE,       at_testCmdGeneric,  NULL,               NULL,                   at_exeCmdCiupdate},
   {"+CIPING",   7,  CMD_CIPING,         at_testCmdGeneric,  NULL,               NULL,                   at_exeCmdCiping},
   {"+CIPAPPUP", 9,  CMD_CIPAPPUP,       at_testCmdGeneric,  NULL,               NULL,                   at_exeCmdCipappup},
-  {"+MERG"    , 5,  CMD_MERG,           at_testCmdGeneric,  NULL,               at_setupMerg,           NULL},
+  {"+MERG"    , 5,  CMD_MERG_CONFIG_AP_EXTENDED,at_testCmdGeneric,  NULL,               at_setupMerg,           NULL},
+  {"+MERGAP"  , 7,  CMD_MERG_CONFIG_AP, at_testCmdGeneric,  NULL,               at_setupMerg,           NULL},
   {"+AT",       3,  CMD_AT,             at_testCmdGeneric,  at_exeCmdNull,      NULL,                   at_exeCmdNull}
 #ifdef ali
   {"+MPINFO", 7, CMD_MPINFO,NULL, NULL, at_setupCmdMpinfo, NULL}

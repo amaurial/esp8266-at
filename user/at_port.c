@@ -100,7 +100,7 @@ at_recvTask(os_event_t *events)
 
     switch(at_state)
     {
-    case at_statIdle: //serch SOH head
+    case at_statIdle: //search SOH head
 
       if(temp==CANWII_SOH)
       {

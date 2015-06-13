@@ -179,7 +179,7 @@ at_cmdProcess(uint8_t *pAtRcvData)
         #ifdef DEBUG
             uart0_sendStr("calling set function\n");
         #endif // DEBUG
-        at_fun[cmdId].at_setupCmd(cmdId, pAtRcvData);
+        at_fun[cmdId].at_setupCmd(at_fun[cmdId].at_cmdCode, pAtRcvData);
       }
       else
       {
