@@ -126,9 +126,72 @@ The other messages follow the AT schema with the format:
 <start of message><message code><action><parameters ... ><end of message>.
 For more information see the ESP8266 AT Commands.
 
+5.4.1. Config AT
+
+Setup action
+Code:0x0a CMD_ATE
+Format:<SOM><CMDID><ACTION><ECHO><EOM>
+Parameters:3
+1. CMDID=0x0a
+2. ACTION = '='
+3. ECHO = value 0=unset echo 1= set echo
+
+Return
+OK = CANWII_OK or ERROR=CANWII_ERR
+
+5.4.2 Reset the unit
+
+Code:0x0b CMD_RST
+Format:<SOM><CMDID><EOM>
+Parameters:3
+1. CMDID=CMD_RST
+
+Return
+OK = CANWII_OK
+
+5.4.3 Return the Version
+
+Code:0x0c CMD_GMR
+Format:<SOM><CMDID><EOM>
+Parameters:3
+1. CMDID=CMD_GMR
+
+Return version followed by
+OK = CANWII_OK
+
+5.4.4 Deep sleep
+
+Code:0x0d CMD_GSLP
+Format:<SOM><CMDID><EOM>
+Parameters:3
+1. CMDID=CMD_GSLP
+
+Return version followed by
+OK = CANWII_OK
+
+5.4.5 Set baud rate
+
+Code:0x0e CMD_IPR
+Format:<SOM><CMDID><BAUD><EOM>
+Parameters:2
+1. CMDID=CMD_IPR
+2. BAUD= 0 ... x
+
+Return version followed by
+OK = CANWII_OK or ERROR=CANWII_ERR
+
+5.4.6
+
+5.4.7
+
+5.4.8
+
+5.4.9
+
+
 7. Constants
 
-CMD_AT          0x0a
+CMD_ATE         0x0a
 CMD_RST         0x0b
 CMD_GMR         0x0c
 CMD_GSLP        0x0d
@@ -208,4 +271,4 @@ CANWII_ERR_BUSY
     8.1. Strange messages when booting.
     8.2. More tests to avoid the restart when doing configuration.
     8.3. Create standard error message format
-
+    8.4. Remote update using the serial port or wifi.
